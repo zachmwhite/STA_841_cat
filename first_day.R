@@ -1,4 +1,4 @@
-# First Day
+s# First Day
 load(eatsleeprun.Rdata)
 names(eatsleeprun) = c("exercise", "sleep", "caffeine", 
                        "veggie")
