@@ -1,6 +1,6 @@
 ---
 title: "Homework 1, Due September 13 at 11:45am by uploading .Rmd and .pdf files on Sakai"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
