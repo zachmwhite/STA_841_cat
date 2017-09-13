@@ -1,0 +1,362 @@
+NYS Physician License Number,Facility ID,Hospital,Region,Procedure,Year of Hospital Discharge,Ncases,Ndeaths,ExpectedMortalityRate
+151958,1169,Montefiore - Moses,Bronx,CABG,2009-2011,68,1,1.15
+238381,1169,Montefiore - Moses,Bronx,CABG,2009-2011,17,0,1.25
+217183,1169,Montefiore - Moses,Bronx,CABG,2009-2011,255,5,1.50
+194273,1169,Montefiore - Moses,Bronx,CABG,2009-2011,171,1,1.86
+202806,1169,Montefiore - Moses,Bronx,CABG,2009-2011,54,1,2.07
+224284,1169,Montefiore - Moses,Bronx,CABG,2009-2011,14,0,2.74
+191052,1169,Montefiore - Moses,Bronx,Valve or Valve/CABG,2009-2011,1,0,0.43
+202806,1169,Montefiore - Moses,Bronx,Valve or Valve/CABG,2009-2011,59,1,2.27
+238381,1169,Montefiore - Moses,Bronx,Valve or Valve/CABG,2009-2011,26,0,2.30
+217183,1169,Montefiore - Moses,Bronx,Valve or Valve/CABG,2009-2011,397,12,2.68
+151958,1169,Montefiore - Moses,Bronx,Valve or Valve/CABG,2009-2011,191,9,3.05
+224284,1169,Montefiore - Moses,Bronx,Valve or Valve/CABG,2009-2011,17,0,3.16
+194273,1169,Montefiore - Moses,Bronx,Valve or Valve/CABG,2009-2011,299,8,3.48
+202806,3058,Montefiore - Weiler,Bronx,CABG,2009-2011,266,1,1.24
+194273,3058,Montefiore - Weiler,Bronx,CABG,2009-2011,43,0,1.37
+224284,3058,Montefiore - Weiler,Bronx,CABG,2009-2011,224,5,1.38
+217183,3058,Montefiore - Weiler,Bronx,CABG,2009-2011,3,0,1.68
+151958,3058,Montefiore - Weiler,Bronx,CABG,2009-2011,9,1,6.07
+217183,3058,Montefiore - Weiler,Bronx,Valve or Valve/CABG,2009-2011,4,0,1.54
+202806,3058,Montefiore - Weiler,Bronx,Valve or Valve/CABG,2009-2011,468,15,2.58
+224284,3058,Montefiore - Weiler,Bronx,Valve or Valve/CABG,2009-2011,325,16,2.66
+194273,3058,Montefiore - Weiler,Bronx,Valve or Valve/CABG,2009-2011,80,0,3.09
+151958,3058,Montefiore - Weiler,Bronx,Valve or Valve/CABG,2009-2011,31,1,4.45
+140950,0001,Albany Medical Center,Capital District,CABG,2009-2011,24,0,1.07
+139347,0001,Albany Medical Center,Capital District,CABG,2009-2011,264,1,1.44
+161824,0001,Albany Medical Center,Capital District,CABG,2009-2011,250,5,1.46
+147956,0001,Albany Medical Center,Capital District,CABG,2009-2011,204,2,1.55
+139347,0001,Albany Medical Center,Capital District,Valve or Valve/CABG,2009-2011,433,10,2.27
+161824,0001,Albany Medical Center,Capital District,Valve or Valve/CABG,2009-2011,397,9,2.55
+140950,0001,Albany Medical Center,Capital District,Valve or Valve/CABG,2009-2011,83,2,2.57
+147956,0001,Albany Medical Center,Capital District,Valve or Valve/CABG,2009-2011,343,5,2.64
+196623,0135,Champ.Valley Phys Hosp,Capital District,CABG,2009-2011,8,0,0.74
+243474,0135,Champ.Valley Phys Hosp,Capital District,CABG,2009-2011,121,2,1.24
+225034,0135,Champ.Valley Phys Hosp,Capital District,CABG,2009-2011,44,1,1.38
+153005,0135,Champ.Valley Phys Hosp,Capital District,CABG,2009-2011,1,0,1.85
+196623,0135,Champ.Valley Phys Hosp,Capital District,Valve or Valve/CABG,2009-2011,9,0,0.78
+225034,0135,Champ.Valley Phys Hosp,Capital District,Valve or Valve/CABG,2009-2011,50,1,1.56
+243474,0135,Champ.Valley Phys Hosp,Capital District,Valve or Valve/CABG,2009-2011,164,4,1.58
+153005,0135,Champ.Valley Phys Hosp,Capital District,Valve or Valve/CABG,2009-2011,1,0,1.85
+180315,0829,Ellis Hospital,Capital District,CABG,2009-2011,204,4,1.21
+225034,0829,Ellis Hospital,Capital District,CABG,2009-2011,149,0,1.36
+147956,0829,Ellis Hospital,Capital District,CABG,2009-2011,98,3,1.99
+225034,0829,Ellis Hospital,Capital District,Valve or Valve/CABG,2009-2011,216,1,1.86
+180315,0829,Ellis Hospital,Capital District,Valve or Valve/CABG,2009-2011,358,9,2.38
+147956,0829,Ellis Hospital,Capital District,Valve or Valve/CABG,2009-2011,150,5,2.58
+190295,0746,M I Bassett Hospital,Capital District,CABG,2009-2011,79,1,1.28
+225050,0746,M I Bassett Hospital,Capital District,CABG,2009-2011,104,4,1.66
+190295,0746,M I Bassett Hospital,Capital District,Valve or Valve/CABG,2009-2011,121,1,1.84
+225050,0746,M I Bassett Hospital,Capital District,Valve or Valve/CABG,2009-2011,149,5,2.26
+140950,0005,St. Peters Hospital,Capital District,CABG,2009-2011,145,0,1.18
+180315,0005,St. Peters Hospital,Capital District,CABG,2009-2011,5,0,1.27
+153005,0005,St. Peters Hospital,Capital District,CABG,2009-2011,447,4,1.44
+162040,0005,St. Peters Hospital,Capital District,CABG,2009-2011,288,6,1.60
+180315,0005,St. Peters Hospital,Capital District,Valve or Valve/CABG,2009-2011,5,0,1.27
+153005,0005,St. Peters Hospital,Capital District,Valve or Valve/CABG,2009-2011,549,6,1.91
+147956,0005,St. Peters Hospital,Capital District,Valve or Valve/CABG,2009-2011,1,0,2.16
+140950,0005,St. Peters Hospital,Capital District,Valve or Valve/CABG,2009-2011,442,7,2.79
+162040,0005,St. Peters Hospital,Capital District,Valve or Valve/CABG,2009-2011,613,21,3.22
+190295,0598,St. Elizabeth Med Ctr,Central NY,CABG,2009-2011,87,3,1.35
+203719,0598,St. Elizabeth Med Ctr,Central NY,CABG,2009-2011,324,8,1.58
+196623,0598,St. Elizabeth Med Ctr,Central NY,CABG,2009-2011,233,3,1.68
+196623,0598,St. Elizabeth Med Ctr,Central NY,Valve or Valve/CABG,2009-2011,346,8,2.46
+203719,0598,St. Elizabeth Med Ctr,Central NY,Valve or Valve/CABG,2009-2011,508,20,2.51
+190295,0598,St. Elizabeth Med Ctr,Central NY,Valve or Valve/CABG,2009-2011,138,7,3.03
+141551,0630,St. Josephs Hospital,Central NY,CABG,2009-2011,204,3,1.55
+224487,0630,St. Josephs Hospital,Central NY,CABG,2009-2011,277,4,1.72
+218262,0630,St. Josephs Hospital,Central NY,CABG,2009-2011,357,7,1.95
+186874,0630,St. Josephs Hospital,Central NY,CABG,2009-2011,368,4,1.96
+167087,0630,St. Josephs Hospital,Central NY,CABG,2009-2011,205,7,2.30
+224487,0630,St. Josephs Hospital,Central NY,Valve or Valve/CABG,2009-2011,494,12,3.01
+186874,0630,St. Josephs Hospital,Central NY,Valve or Valve/CABG,2009-2011,538,11,3.16
+218262,0630,St. Josephs Hospital,Central NY,Valve or Valve/CABG,2009-2011,591,17,3.29
+141551,0630,St. Josephs Hospital,Central NY,Valve or Valve/CABG,2009-2011,479,10,3.34
+167087,0630,St. Josephs Hospital,Central NY,Valve or Valve/CABG,2009-2011,352,26,3.80
+165591,0058,Unitd Hlth Svcs-Wilson,Central NY,CABG,2009-2011,282,5,1.60
+162966,0058,Unitd Hlth Svcs-Wilson,Central NY,CABG,2009-2011,285,4,1.82
+165591,0058,Unitd Hlth Svcs-Wilson,Central NY,Valve or Valve/CABG,2009-2011,388,9,2.03
+162966,0058,Unitd Hlth Svcs-Wilson,Central NY,Valve or Valve/CABG,2009-2011,417,6,2.40
+211367,0635,Univ.Hosp-SUNY Upstate,Central NY,CABG,2009-2011,165,1,1.58
+223983,0635,Univ.Hosp-SUNY Upstate,Central NY,CABG,2009-2011,281,5,1.82
+211367,0635,Univ.Hosp-SUNY Upstate,Central NY,Valve or Valve/CABG,2009-2011,245,1,2.31
+223983,0635,Univ.Hosp-SUNY Upstate,Central NY,Valve or Valve/CABG,2009-2011,451,12,2.38
+211387,1305,Maimonides Medical Ctr,Kings,CABG,2009-2011,65,2,0.94
+212995,1305,Maimonides Medical Ctr,Kings,CABG,2009-2011,4,0,1.06
+194914,1305,Maimonides Medical Ctr,Kings,CABG,2009-2011,154,6,1.73
+179123,1305,Maimonides Medical Ctr,Kings,CABG,2009-2011,35,0,1.76
+  1395,1305,Maimonides Medical Ctr,Kings,CABG,2009-2011,192,3,1.79
+122508,1305,Maimonides Medical Ctr,Kings,CABG,2009-2011,302,3,2.04
+152786,1305,Maimonides Medical Ctr,Kings,CABG,2009-2011,40,1,2.80
+162614,1305,Maimonides Medical Ctr,Kings,CABG,2009-2011,13,1,3.45
+212995,1305,Maimonides Medical Ctr,Kings,Valve or Valve/CABG,2009-2011,4,0,1.06
+211387,1305,Maimonides Medical Ctr,Kings,Valve or Valve/CABG,2009-2011,90,5,1.61
+179123,1305,Maimonides Medical Ctr,Kings,Valve or Valve/CABG,2009-2011,58,0,2.88
+  1395,1305,Maimonides Medical Ctr,Kings,Valve or Valve/CABG,2009-2011,287,8,2.93
+194914,1305,Maimonides Medical Ctr,Kings,Valve or Valve/CABG,2009-2011,241,10,2.93
+122508,1305,Maimonides Medical Ctr,Kings,Valve or Valve/CABG,2009-2011,427,4,3.06
+152786,1305,Maimonides Medical Ctr,Kings,Valve or Valve/CABG,2009-2011,102,4,3.37
+162614,1305,Maimonides Medical Ctr,Kings,Valve or Valve/CABG,2009-2011,17,2,3.96
+119887,1306,NY Methodist Hospital,Kings,CABG,2009-2011,138,3,1.27
+162167,1306,NY Methodist Hospital,Kings,CABG,2009-2011,65,0,2.22
+119887,1306,NY Methodist Hospital,Kings,Valve or Valve/CABG,2009-2011,221,8,2.12
+162167,1306,NY Methodist Hospital,Kings,Valve or Valve/CABG,2009-2011,117,0,3.43
+238034,1320,Univ.Hosp-Brooklyn,Kings,CABG,2009-2011,104,2,1.54
+155307,1320,Univ.Hosp-Brooklyn,Kings,CABG,2009-2011,15,0,1.69
+171116,1320,Univ.Hosp-Brooklyn,Kings,CABG,2009-2011,24,1,1.69
+218996,1320,Univ.Hosp-Brooklyn,Kings,CABG,2009-2011,34,1,2.75
+155307,1320,Univ.Hosp-Brooklyn,Kings,Valve or Valve/CABG,2009-2011,21,0,1.83
+218996,1320,Univ.Hosp-Brooklyn,Kings,Valve or Valve/CABG,2009-2011,52,1,2.69
+171116,1320,Univ.Hosp-Brooklyn,Kings,Valve or Valve/CABG,2009-2011,45,1,3.12
+238034,1320,Univ.Hosp-Brooklyn,Kings,Valve or Valve/CABG,2009-2011,180,6,3.31
+216688,1438,Bellevue Hospital Ctr,Manhattan,CABG,2009-2011,20,0,0.70
+179123,1438,Bellevue Hospital Ctr,Manhattan,CABG,2009-2011,69,0,0.80
+248717,1438,Bellevue Hospital Ctr,Manhattan,CABG,2009-2011,138,0,1.12
+238381,1438,Bellevue Hospital Ctr,Manhattan,CABG,2009-2011,83,2,1.17
+152786,1438,Bellevue Hospital Ctr,Manhattan,CABG,2009-2011,29,1,1.55
+244009,1438,Bellevue Hospital Ctr,Manhattan,CABG,2009-2011,16,1,1.57
+107782,1438,Bellevue Hospital Ctr,Manhattan,CABG,2009-2011,1,0,2.62
+216688,1438,Bellevue Hospital Ctr,Manhattan,Valve or Valve/CABG,2009-2011,27,0,1.06
+248717,1438,Bellevue Hospital Ctr,Manhattan,Valve or Valve/CABG,2009-2011,255,2,1.94
+179123,1438,Bellevue Hospital Ctr,Manhattan,Valve or Valve/CABG,2009-2011,103,2,1.95
+238381,1438,Bellevue Hospital Ctr,Manhattan,Valve or Valve/CABG,2009-2011,136,5,2.12
+244009,1438,Bellevue Hospital Ctr,Manhattan,Valve or Valve/CABG,2009-2011,39,3,2.53
+152786,1438,Bellevue Hospital Ctr,Manhattan,Valve or Valve/CABG,2009-2011,67,4,2.55
+107782,1438,Bellevue Hospital Ctr,Manhattan,Valve or Valve/CABG,2009-2011,1,0,2.62
+196806,1439,Beth Israel Med Ctr,Manhattan,CABG,2009-2011,185,2,0.99
+174773,1439,Beth Israel Med Ctr,Manhattan,CABG,2009-2011,82,0,1.07
+166126,1439,Beth Israel Med Ctr,Manhattan,CABG,2009-2011,276,2,1.10
+171116,1439,Beth Israel Med Ctr,Manhattan,CABG,2009-2011,19,0,1.33
+196806,1439,Beth Israel Med Ctr,Manhattan,Valve or Valve/CABG,2009-2011,235,6,1.59
+171116,1439,Beth Israel Med Ctr,Manhattan,Valve or Valve/CABG,2009-2011,49,0,1.97
+174773,1439,Beth Israel Med Ctr,Manhattan,Valve or Valve/CABG,2009-2011,116,2,2.11
+166126,1439,Beth Israel Med Ctr,Manhattan,Valve or Valve/CABG,2009-2011,452,15,2.25
+244009,1450,Lenox Hill Hospital,Manhattan,CABG,2009-2011,3,0,0.36
+238916,1450,Lenox Hill Hospital,Manhattan,CABG,2009-2011,536,6,1.50
+205700,1450,Lenox Hill Hospital,Manhattan,CABG,2009-2011,83,1,1.50
+  3413,1450,Lenox Hill Hospital,Manhattan,CABG,2009-2011,18,0,1.67
+111604,1450,Lenox Hill Hospital,Manhattan,CABG,2009-2011,320,3,1.70
+225756,1450,Lenox Hill Hospital,Manhattan,CABG,2009-2011,10,0,2.30
+  3413,1450,Lenox Hill Hospital,Manhattan,Valve or Valve/CABG,2009-2011,21,1,2.01
+238916,1450,Lenox Hill Hospital,Manhattan,Valve or Valve/CABG,2009-2011,747,13,2.19
+225756,1450,Lenox Hill Hospital,Manhattan,Valve or Valve/CABG,2009-2011,14,0,2.21
+205700,1450,Lenox Hill Hospital,Manhattan,Valve or Valve/CABG,2009-2011,218,2,2.94
+244009,1450,Lenox Hill Hospital,Manhattan,Valve or Valve/CABG,2009-2011,22,2,3.31
+111604,1450,Lenox Hill Hospital,Manhattan,Valve or Valve/CABG,2009-2011,492,26,3.56
+188828,1456,Mount Sinai Hospital,Manhattan,CABG,2009-2011,1,0,0.26
+129585,1456,Mount Sinai Hospital,Manhattan,CABG,2009-2011,1,0,0.48
+223474,1456,Mount Sinai Hospital,Manhattan,CABG,2009-2011,17,0,0.78
+116739,1456,Mount Sinai Hospital,Manhattan,CABG,2009-2011,43,2,0.94
+236848,1456,Mount Sinai Hospital,Manhattan,CABG,2009-2011,4,0,0.95
+239983,1456,Mount Sinai Hospital,Manhattan,CABG,2009-2011,58,0,1.00
+190367,1456,Mount Sinai Hospital,Manhattan,CABG,2009-2011,262,8,1.07
+ 23064,1456,Mount Sinai Hospital,Manhattan,CABG,2009-2011,278,5,1.14
+183735,1456,Mount Sinai Hospital,Manhattan,CABG,2009-2011,47,1,1.29
+270258,1456,Mount Sinai Hospital,Manhattan,CABG,2009-2011,43,1,1.48
+225756,1456,Mount Sinai Hospital,Manhattan,CABG,2009-2011,94,6,1.55
+  3227,1456,Mount Sinai Hospital,Manhattan,CABG,2009-2011,82,1,1.58
+188828,1456,Mount Sinai Hospital,Manhattan,Valve or Valve/CABG,2009-2011,2,0,0.73
+239983,1456,Mount Sinai Hospital,Manhattan,Valve or Valve/CABG,2009-2011,82,0,1.49
+183735,1456,Mount Sinai Hospital,Manhattan,Valve or Valve/CABG,2009-2011,72,4,1.91
+  3227,1456,Mount Sinai Hospital,Manhattan,Valve or Valve/CABG,2009-2011,134,2,2.12
+ 23064,1456,Mount Sinai Hospital,Manhattan,Valve or Valve/CABG,2009-2011,405,11,2.17
+129585,1456,Mount Sinai Hospital,Manhattan,Valve or Valve/CABG,2009-2011,6,0,2.42
+190367,1456,Mount Sinai Hospital,Manhattan,Valve or Valve/CABG,2009-2011,362,20,2.42
+236848,1456,Mount Sinai Hospital,Manhattan,Valve or Valve/CABG,2009-2011,18,1,2.43
+225756,1456,Mount Sinai Hospital,Manhattan,Valve or Valve/CABG,2009-2011,174,12,2.57
+223474,1456,Mount Sinai Hospital,Manhattan,Valve or Valve/CABG,2009-2011,886,19,2.75
+116739,1456,Mount Sinai Hospital,Manhattan,Valve or Valve/CABG,2009-2011,256,11,3.87
+270258,1456,Mount Sinai Hospital,Manhattan,Valve or Valve/CABG,2009-2011,107,10,5.06
+134816,1464,NYP- Columbia Presby.,Manhattan,CABG,2009-2011,114,3,1.03
+199030,1464,NYP- Columbia Presby.,Manhattan,CABG,2009-2011,150,6,1.25
+211283,1464,NYP- Columbia Presby.,Manhattan,CABG,2009-2011,150,1,1.45
+213210,1464,NYP- Columbia Presby.,Manhattan,CABG,2009-2011,298,9,1.50
+224040,1464,NYP- Columbia Presby.,Manhattan,CABG,2009-2011,178,6,1.51
+  3330,1464,NYP- Columbia Presby.,Manhattan,CABG,2009-2011,75,1,1.75
+201405,1464,NYP- Columbia Presby.,Manhattan,Valve or Valve/CABG,2009-2011,1,0,0.31
+189014,1464,NYP- Columbia Presby.,Manhattan,Valve or Valve/CABG,2009-2011,2,0,1.43
+199030,1464,NYP- Columbia Presby.,Manhattan,Valve or Valve/CABG,2009-2011,388,17,2.46
+134816,1464,NYP- Columbia Presby.,Manhattan,Valve or Valve/CABG,2009-2011,674,14,3.03
+  3330,1464,NYP- Columbia Presby.,Manhattan,Valve or Valve/CABG,2009-2011,126,3,3.08
+213210,1464,NYP- Columbia Presby.,Manhattan,Valve or Valve/CABG,2009-2011,580,27,3.38
+224040,1464,NYP- Columbia Presby.,Manhattan,Valve or Valve/CABG,2009-2011,558,25,3.57
+211283,1464,NYP- Columbia Presby.,Manhattan,Valve or Valve/CABG,2009-2011,445,16,4.19
+213210,1458,NYP- Weill Cornell,Manhattan,CABG,2009-2011,2,0,0.41
+119887,1458,NYP- Weill Cornell,Manhattan,CABG,2009-2011,4,1,0.57
+162167,1458,NYP- Weill Cornell,Manhattan,CABG,2009-2011,1,0,1.00
+105919,1458,NYP- Weill Cornell,Manhattan,CABG,2009-2011,31,0,1.05
+184274,1458,NYP- Weill Cornell,Manhattan,CABG,2009-2011,238,0,1.35
+127882,1458,NYP- Weill Cornell,Manhattan,CABG,2009-2011,190,1,1.46
+210951,1458,NYP- Weill Cornell,Manhattan,CABG,2009-2011,135,2,1.58
+166401,1458,NYP- Weill Cornell,Manhattan,CABG,2009-2011,6,0,4.19
+213210,1458,NYP- Weill Cornell,Manhattan,Valve or Valve/CABG,2009-2011,2,0,0.41
+119887,1458,NYP- Weill Cornell,Manhattan,Valve or Valve/CABG,2009-2011,5,1,0.75
+201405,1458,NYP- Weill Cornell,Manhattan,Valve or Valve/CABG,2009-2011,6,0,1.26
+105919,1458,NYP- Weill Cornell,Manhattan,Valve or Valve/CABG,2009-2011,100,1,2.21
+210951,1458,NYP- Weill Cornell,Manhattan,Valve or Valve/CABG,2009-2011,259,5,2.40
+166401,1458,NYP- Weill Cornell,Manhattan,Valve or Valve/CABG,2009-2011,15,0,2.63
+162167,1458,NYP- Weill Cornell,Manhattan,Valve or Valve/CABG,2009-2011,2,0,2.79
+184274,1458,NYP- Weill Cornell,Manhattan,Valve or Valve/CABG,2009-2011,927,15,3.08
+127882,1458,NYP- Weill Cornell,Manhattan,Valve or Valve/CABG,2009-2011,584,13,3.28
+169305,1463,NYU Hospitals Center,Manhattan,CABG,2009-2011,1,0,0.38
+248717,1463,NYU Hospitals Center,Manhattan,CABG,2009-2011,3,0,0.54
+244009,1463,NYU Hospitals Center,Manhattan,CABG,2009-2011,39,0,0.85
+153862,1463,NYU Hospitals Center,Manhattan,CABG,2009-2011,9,0,0.89
+107782,1463,NYU Hospitals Center,Manhattan,CABG,2009-2011,83,1,0.90
+238381,1463,NYU Hospitals Center,Manhattan,CABG,2009-2011,2,0,0.92
+183735,1463,NYU Hospitals Center,Manhattan,CABG,2009-2011,95,2,0.96
+152786,1463,NYU Hospitals Center,Manhattan,CABG,2009-2011,21,0,1.10
+154112,1463,NYU Hospitals Center,Manhattan,CABG,2009-2011,42,0,1.23
+216688,1463,NYU Hospitals Center,Manhattan,CABG,2009-2011,120,1,1.27
+179123,1463,NYU Hospitals Center,Manhattan,CABG,2009-2011,5,0,1.35
+169305,1463,NYU Hospitals Center,Manhattan,Valve or Valve/CABG,2009-2011,6,0,1.03
+238381,1463,NYU Hospitals Center,Manhattan,Valve or Valve/CABG,2009-2011,5,0,1.14
+248717,1463,NYU Hospitals Center,Manhattan,Valve or Valve/CABG,2009-2011,6,0,1.78
+244009,1463,NYU Hospitals Center,Manhattan,Valve or Valve/CABG,2009-2011,245,6,2.22
+183735,1463,NYU Hospitals Center,Manhattan,Valve or Valve/CABG,2009-2011,323,7,2.22
+179123,1463,NYU Hospitals Center,Manhattan,Valve or Valve/CABG,2009-2011,12,0,2.27
+216688,1463,NYU Hospitals Center,Manhattan,Valve or Valve/CABG,2009-2011,237,8,2.53
+153862,1463,NYU Hospitals Center,Manhattan,Valve or Valve/CABG,2009-2011,24,1,2.93
+154112,1463,NYU Hospitals Center,Manhattan,Valve or Valve/CABG,2009-2011,574,17,3.03
+107782,1463,NYU Hospitals Center,Manhattan,Valve or Valve/CABG,2009-2011,184,6,3.10
+152786,1463,NYU Hospitals Center,Manhattan,Valve or Valve/CABG,2009-2011,67,3,3.23
+229489,1469,St. Lukes at St. Lukes,Manhattan,CABG,2009-2011,80,2,1.86
+146294,1469,St. Lukes at St. Lukes,Manhattan,CABG,2009-2011,268,9,2.15
+146294,1469,St. Lukes at St. Lukes,Manhattan,Valve or Valve/CABG,2009-2011,473,23,2.84
+229489,1469,St. Lukes at St. Lukes,Manhattan,Valve or Valve/CABG,2009-2011,141,5,3.12
+187113,0541,North Shore Univ Hosp,NY Metro - Long Island,CABG,2009-2011,224,2,1.54
+161229,0541,North Shore Univ Hosp,NY Metro - Long Island,CABG,2009-2011,191,5,1.61
+146350,0541,North Shore Univ Hosp,NY Metro - Long Island,CABG,2009-2011,73,1,1.68
+144795,0541,North Shore Univ Hosp,NY Metro - Long Island,CABG,2009-2011,312,5,1.87
+208473,0541,North Shore Univ Hosp,NY Metro - Long Island,CABG,2009-2011,259,5,2.40
+121237,0541,North Shore Univ Hosp,NY Metro - Long Island,CABG,2009-2011,213,2,2.45
+187113,0541,North Shore Univ Hosp,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,388,4,2.77
+161229,0541,North Shore Univ Hosp,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,344,12,3.02
+208473,0541,North Shore Univ Hosp,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,477,7,3.20
+144795,0541,North Shore Univ Hosp,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,552,24,3.53
+121237,0541,North Shore Univ Hosp,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,400,12,4.03
+146350,0541,North Shore Univ Hosp,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,426,15,4.56
+146350,0924,Southside Hospital,NY Metro - Long Island,CABG,2009-2011,22,0,1.35
+211562,0924,Southside Hospital,NY Metro - Long Island,CABG,2009-2011,33,1,1.95
+208473,0924,Southside Hospital,NY Metro - Long Island,CABG,2009-2011,57,1,2.14
+211562,0924,Southside Hospital,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,41,1,2.40
+146350,0924,Southside Hospital,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,75,1,3.30
+208473,0924,Southside Hospital,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,100,1,3.61
+134426,0563,St. Francis Hospital,NY Metro - Long Island,CABG,2009-2011,373,10,1.62
+192051,0563,St. Francis Hospital,NY Metro - Long Island,CABG,2009-2011,667,11,1.63
+165177,0563,St. Francis Hospital,NY Metro - Long Island,CABG,2009-2011,339,3,1.72
+166638,0563,St. Francis Hospital,NY Metro - Long Island,CABG,2009-2011,342,10,1.89
+181817,0563,St. Francis Hospital,NY Metro - Long Island,CABG,2009-2011,316,3,2.09
+197070,0563,St. Francis Hospital,NY Metro - Long Island,CABG,2009-2011,360,3,2.15
+134426,0563,St. Francis Hospital,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,781,31,2.95
+166638,0563,St. Francis Hospital,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,570,26,2.96
+197070,0563,St. Francis Hospital,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,512,12,3.24
+192051,0563,St. Francis Hospital,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,1075,27,3.34
+165177,0563,St. Francis Hospital,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,876,19,3.51
+181817,0563,St. Francis Hospital,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,536,22,3.95
+195637,0245,Univ.Hosp-Stony Brook,NY Metro - Long Island,CABG,2009-2011,102,3,1.32
+154255,0245,Univ.Hosp-Stony Brook,NY Metro - Long Island,CABG,2009-2011,234,2,1.48
+254021,0245,Univ.Hosp-Stony Brook,NY Metro - Long Island,CABG,2009-2011,116,2,1.50
+159887,0245,Univ.Hosp-Stony Brook,NY Metro - Long Island,CABG,2009-2011,168,1,1.78
+176640,0245,Univ.Hosp-Stony Brook,NY Metro - Long Island,CABG,2009-2011,98,3,1.99
+154255,0245,Univ.Hosp-Stony Brook,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,339,9,2.60
+195637,0245,Univ.Hosp-Stony Brook,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,144,12,2.87
+176640,0245,Univ.Hosp-Stony Brook,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,145,7,3.02
+254021,0245,Univ.Hosp-Stony Brook,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,223,4,3.08
+159887,0245,Univ.Hosp-Stony Brook,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,363,13,3.77
+185586,0511,Winthrop Univ. Hosp,NY Metro - Long Island,CABG,2009-2011,184,1,1.09
+201051,0511,Winthrop Univ. Hosp,NY Metro - Long Island,CABG,2009-2011,324,6,1.66
+190141,0511,Winthrop Univ. Hosp,NY Metro - Long Island,CABG,2009-2011,219,3,1.72
+185586,0511,Winthrop Univ. Hosp,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,378,5,2.31
+201051,0511,Winthrop Univ. Hosp,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,553,17,3.08
+190141,0511,Winthrop Univ. Hosp,NY Metro - Long Island,Valve or Valve/CABG,2009-2011,389,10,3.11
+232808,0779,Good Sam - Suffern,NY Metro - New Rochelle,CABG,2009-2011,237,1,1.20
+241945,0779,Good Sam - Suffern,NY Metro - New Rochelle,CABG,2009-2011,201,1,1.50
+232808,0779,Good Sam - Suffern,NY Metro - New Rochelle,Valve or Valve/CABG,2009-2011,279,3,1.27
+241945,0779,Good Sam - Suffern,NY Metro - New Rochelle,Valve or Valve/CABG,2009-2011,330,5,2.31
+162167,0181,Vassar Bros. Med Ctr,NY Metro - New Rochelle,CABG,2009-2011,1,0,0.60
+232890,0181,Vassar Bros. Med Ctr,NY Metro - New Rochelle,CABG,2009-2011,94,1,1.18
+195399,0181,Vassar Bros. Med Ctr,NY Metro - New Rochelle,CABG,2009-2011,224,3,1.21
+220150,0181,Vassar Bros. Med Ctr,NY Metro - New Rochelle,CABG,2009-2011,165,2,1.26
+142851,0181,Vassar Bros. Med Ctr,NY Metro - New Rochelle,CABG,2009-2011,152,1,1.59
+162167,0181,Vassar Bros. Med Ctr,NY Metro - New Rochelle,Valve or Valve/CABG,2009-2011,1,0,0.60
+232890,0181,Vassar Bros. Med Ctr,NY Metro - New Rochelle,Valve or Valve/CABG,2009-2011,103,2,1.23
+220150,0181,Vassar Bros. Med Ctr,NY Metro - New Rochelle,Valve or Valve/CABG,2009-2011,255,4,2.04
+195399,0181,Vassar Bros. Med Ctr,NY Metro - New Rochelle,Valve or Valve/CABG,2009-2011,352,7,2.15
+142851,0181,Vassar Bros. Med Ctr,NY Metro - New Rochelle,Valve or Valve/CABG,2009-2011,424,5,3.10
+212995,1139,Westchester Med Ctr,NY Metro - New Rochelle,CABG,2009-2011,2,0,1.18
+162613,1139,Westchester Med Ctr,NY Metro - New Rochelle,CABG,2009-2011,228,3,1.58
+191723,1139,Westchester Med Ctr,NY Metro - New Rochelle,CABG,2009-2011,335,2,1.83
+140743,1139,Westchester Med Ctr,NY Metro - New Rochelle,CABG,2009-2011,207,1,1.99
+201949,1139,Westchester Med Ctr,NY Metro - New Rochelle,CABG,2009-2011,115,2,2.51
+212995,1139,Westchester Med Ctr,NY Metro - New Rochelle,Valve or Valve/CABG,2009-2011,3,0,1.15
+162613,1139,Westchester Med Ctr,NY Metro - New Rochelle,Valve or Valve/CABG,2009-2011,301,6,2.17
+140743,1139,Westchester Med Ctr,NY Metro - New Rochelle,Valve or Valve/CABG,2009-2011,301,6,2.94
+191723,1139,Westchester Med Ctr,NY Metro - New Rochelle,Valve or Valve/CABG,2009-2011,576,8,3.23
+201949,1139,Westchester Med Ctr,NY Metro - New Rochelle,Valve or Valve/CABG,2009-2011,167,3,3.75
+211967,1630,LIJ Medical Center,Queens,CABG,2009-2011,1,0,1.07
+189626,1630,LIJ Medical Center,Queens,CABG,2009-2011,154,0,1.35
+211562,1630,LIJ Medical Center,Queens,CABG,2009-2011,72,1,1.55
+136870,1630,LIJ Medical Center,Queens,CABG,2009-2011,154,2,1.58
+151168,1630,LIJ Medical Center,Queens,CABG,2009-2011,168,2,1.72
+131724,1630,LIJ Medical Center,Queens,Valve or Valve/CABG,2009-2011,2,0,0.90
+211967,1630,LIJ Medical Center,Queens,Valve or Valve/CABG,2009-2011,1,0,1.07
+211562,1630,LIJ Medical Center,Queens,Valve or Valve/CABG,2009-2011,105,3,2.66
+189626,1630,LIJ Medical Center,Queens,Valve or Valve/CABG,2009-2011,259,1,2.84
+151168,1630,LIJ Medical Center,Queens,Valve or Valve/CABG,2009-2011,347,2,3.04
+136870,1630,LIJ Medical Center,Queens,Valve or Valve/CABG,2009-2011,453,14,3.96
+166401,1637,NY Hospital - Queens,Queens,CABG,2009-2011,294,2,1.27
+166401,1637,NY Hospital - Queens,Queens,Valve or Valve/CABG,2009-2011,384,2,1.58
+151821,1740,Staten Island UnivHosp,Staten Island,CABG,2009-2011,348,5,1.29
+236991,1740,Staten Island UnivHosp,Staten Island,CABG,2009-2011,320,5,1.33
+199001,1740,Staten Island UnivHosp,Staten Island,CABG,2009-2011,280,3,1.52
+213550,1740,Staten Island UnivHosp,Staten Island,CABG,2009-2011,8,0,1.73
+151821,1740,Staten Island UnivHosp,Staten Island,Valve or Valve/CABG,2009-2011,442,9,1.70
+213550,1740,Staten Island UnivHosp,Staten Island,Valve or Valve/CABG,2009-2011,8,0,1.73
+199001,1740,Staten Island UnivHosp,Staten Island,Valve or Valve/CABG,2009-2011,313,5,1.85
+236991,1740,Staten Island UnivHosp,Staten Island,Valve or Valve/CABG,2009-2011,531,19,2.15
+164499,0207,Buffalo General Hosp,Western NY - Buffalo,CABG,2009-2011,11,0,1.10
+128093,0207,Buffalo General Hosp,Western NY - Buffalo,CABG,2009-2011,4,0,1.12
+165721,0207,Buffalo General Hosp,Western NY - Buffalo,CABG,2009-2011,736,12,1.40
+146975,0207,Buffalo General Hosp,Western NY - Buffalo,CABG,2009-2011,177,7,1.51
+164499,0207,Buffalo General Hosp,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,11,0,1.10
+128093,0207,Buffalo General Hosp,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,4,0,1.12
+146975,0207,Buffalo General Hosp,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,243,9,2.00
+165721,0207,Buffalo General Hosp,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,1160,23,2.04
+121353,0210,Erie County Med Ctr,Western NY - Buffalo,CABG,2009-2011,1,0,0.50
+146975,0210,Erie County Med Ctr,Western NY - Buffalo,CABG,2009-2011,22,0,0.81
+224769,0210,Erie County Med Ctr,Western NY - Buffalo,CABG,2009-2011,268,3,1.44
+121353,0210,Erie County Med Ctr,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,1,0,0.50
+224769,0210,Erie County Med Ctr,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,308,5,1.77
+146975,0210,Erie County Med Ctr,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,33,0,2.24
+224769,0213,Mercy Hospital,Western NY - Buffalo,CABG,2009-2011,158,0,1.29
+121353,0213,Mercy Hospital,Western NY - Buffalo,CABG,2009-2011,447,8,1.40
+184556,0213,Mercy Hospital,Western NY - Buffalo,CABG,2009-2011,349,3,1.40
+128093,0213,Mercy Hospital,Western NY - Buffalo,CABG,2009-2011,66,2,1.88
+224769,0213,Mercy Hospital,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,183,0,1.67
+121353,0213,Mercy Hospital,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,748,19,1.92
+184556,0213,Mercy Hospital,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,420,7,1.92
+128093,0213,Mercy Hospital,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,86,4,2.74
+164499,0215,Millard Fillmore Hosp,Western NY - Buffalo,CABG,2009-2011,588,8,1.41
+128093,0215,Millard Fillmore Hosp,Western NY - Buffalo,CABG,2009-2011,128,1,1.57
+146975,0215,Millard Fillmore Hosp,Western NY - Buffalo,CABG,2009-2011,10,0,1.79
+164499,0215,Millard Fillmore Hosp,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,777,13,1.65
+128093,0215,Millard Fillmore Hosp,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,170,3,1.92
+146975,0215,Millard Fillmore Hosp,Western NY - Buffalo,Valve or Valve/CABG,2009-2011,38,1,2.31
+238582,0116,Arnot Ogden Med Ctr,Western NY - Rochester,CABG,2009-2011,146,1,1.34
+192995,0116,Arnot Ogden Med Ctr,Western NY - Rochester,CABG,2009-2011,155,1,1.38
+192995,0116,Arnot Ogden Med Ctr,Western NY - Rochester,Valve or Valve/CABG,2009-2011,218,6,1.71
+238582,0116,Arnot Ogden Med Ctr,Western NY - Rochester,Valve or Valve/CABG,2009-2011,206,5,1.77
+148925,0411,Rochester General Hosp,Western NY - Rochester,CABG,2009-2011,518,7,1.81
+144645,0411,Rochester General Hosp,Western NY - Rochester,CABG,2009-2011,473,13,1.85
+224517,0411,Rochester General Hosp,Western NY - Rochester,CABG,2009-2011,151,5,1.95
+148925,0411,Rochester General Hosp,Western NY - Rochester,Valve or Valve/CABG,2009-2011,852,28,2.93
+224517,0411,Rochester General Hosp,Western NY - Rochester,Valve or Valve/CABG,2009-2011,194,9,3.03
+144645,0411,Rochester General Hosp,Western NY - Rochester,Valve or Valve/CABG,2009-2011,1070,44,3.23
+149371,0413,Strong Memorial Hosp,Western NY - Rochester,CABG,2009-2011,529,14,1.20
+219319,0413,Strong Memorial Hosp,Western NY - Rochester,CABG,2009-2011,149,2,1.24
+112595,0413,Strong Memorial Hosp,Western NY - Rochester,CABG,2009-2011,287,5,1.36
+176297,0413,Strong Memorial Hosp,Western NY - Rochester,Valve or Valve/CABG,2009-2011,1,0,1.23
+219319,0413,Strong Memorial Hosp,Western NY - Rochester,Valve or Valve/CABG,2009-2011,187,4,1.98
+149371,0413,Strong Memorial Hosp,Western NY - Rochester,Valve or Valve/CABG,2009-2011,1000,32,2.12
+112595,0413,Strong Memorial Hosp,Western NY - Rochester,Valve or Valve/CABG,2009-2011,396,11,2.25
