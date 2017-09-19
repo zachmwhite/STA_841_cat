@@ -5,6 +5,15 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(xlsx)
+library(MCMCpack)
+library(knitr)
+library(vcdExtra)
+library(exact2x2)
+library(DescTools)
+library(pscl)
+library(abind)
 ```
 
 ## Provide clearly documented code in an R markdown document where appropriate. Points will be deducted in each question if results are not reproducible. Whenever possible, provide statistical evidence to support your answers. 
@@ -24,6 +33,68 @@ barplot(out20082011,names.arg=c('Survived; No Impairment','Survived; Impaired','
 
 Suppose historical rates of all three outcomes (from the early 2000's) are 15% survival without impairment, 15% survival with impairment, and 70% death.  Estimate the proportions of infants surviving without impairment, surviving with impairment, and dying, providing point and interval estimates. Evaluate the hypothesis that the current rates are equal to the historical rates of 15, 15, and 70%, respectively, using the multinomial distribution. Display results using informative graphics.
 
+### Solution
+I use the conjugate prior of Dirichlet($\alpha_1,\alpha_2,\alpha_3$).  I use three different sets of $\boldsymbol{\alpha}$ to demonstrate varying levels of prior certainty.  In a situation like this study, we have a total sample of 1348($n = 1348$), which is a good sample size, but when we compare this with historical averages and we are interested in comparing current rates versus past rates, we should have a relatively strong prior representing historical knowledge.
+
+We understand that under this Dirichlet-multinomial framework, the posterior distribution will follow a Dirichlet($n_1 + \alpha_1,n_2 + \alpha_2,n_3 + \alpha_3$).
+
+
+```{r, cache = TRUE}
+n1 = 276
+n2 = 211
+n3 = 861
+prior.mat = matrix(c(15,15,70,202,202,944,750,750,3500), nrow = 3, byrow = FALSE)
+colnames(prior.mat) = c("rel_weak","equal","strong")
+rownames(prior.mat) = c("alpha_1","alpha_2","alpha_3")
+
+post.mat = prior.mat
+post.mat[1,1:3] = post.mat[1,1:3]+n1
+post.mat[2,1:3] = post.mat[2,1:3]+n2
+post.mat[3,1:3] = post.mat[3,1:3]+n3
+post.mat
+
+kable(prior.mat)
+kable(post.mat)
+```
+
+```{r,cache=TRUE}
+n.reps = 1e06
+post.alpha1 = rdirichlet(n.reps,post.mat[,1])
+post.alpha2 = rdirichlet(n.reps,post.mat[,2])
+post.alpha3= rdirichlet(n.reps,post.mat[,3])
+
+par(mfrow = c(1,3))
+plot(density(post.alpha1[,1]), xlim = c(.10,.75), lwd = 2, main = expression("Posterior of ",theta), xlab = expression(theta))
+lines(density(post.alpha1[,2]), col = "red", lwd = 2)
+lines(density(post.alpha1[,3]), col = "blue", lwd = 2)
+
+plot(density(post.alpha2[,1]), xlim = c(.10,.75), lwd = 2, main = expression("Posterior of ",theta), xlab = expression(theta))
+lines(density(post.alpha2[,2]), col = "red", lwd = 2)
+lines(density(post.alpha2[,3]), col = "blue", lwd = 2)
+
+
+plot(density(post.alpha3[,1]), xlim = c(.10,.75), lwd = 2, main = expression("Posterior of ",theta), xlab = expression(theta))
+lines(density(post.alpha3[,2]), col = "red", lwd = 2)
+lines(density(post.alpha3[,3]), col = "blue", lwd = 2)
+
+exp.mat = matrix(NA, nrow= 3,ncol = 3)
+colnames(exp.mat) = colnames(prior.mat)
+rownames(exp.mat) = rownames(prior.mat)
+exp.mat[1,1:3] = apply(post.alpha1,2,mean) 
+exp.mat[2,1:3] =apply(post.alpha2,2,mean) 
+exp.mat[3,1:3]= apply(post.alpha3,2,mean) 
+
+quant.mat = matrix(NA,nrow = 3,ncol = 6)
+rownames(quant.mat)  = rownames(prior.mat)
+quant.mat[1,1:6] = apply(post.alpha1,2, FUN = quantile, c(.025,.975))
+quant.mat[2,1:6] = apply(post.alpha2,2, FUN = quantile, c(.025,.975))
+quant.mat[3,1:6] = apply(post.alpha3,2, FUN = quantile, c(.025,.975))
+
+kable(exp.mat)
+kable(quant.mat)
+```
+
+It seems clear that this does not represent historical rates and there is a difference.  None of the historical rates are in the credible intervals for the data under any of my priors.
 
 ## 2. Agresti 1.7 (12 points total)
 Complete the given parts and add part f, given below. In a crossover trial comparing a new drug to a standard, $\pi$ denotes the probability that the new one is judged better. It is desired to estimate $\pi$ and to test $H_0: \pi=0.50$ against $H_a: \pi \neq 0.50$. In 20 independent observations, the new drug is better each time.
@@ -31,29 +102,114 @@ Complete the given parts and add part f, given below. In a crossover trial compa
 ###2.a. (2 points)
 Plot the likelihood function. Is it close to the quadratic shape that large-sample normal approximations utilize?
 
+#### Solution
+The likelihood is $\pi^20$, which is not quadratic.
+
+```{r}
+pi.seq = seq(0,1,by = .01)
+plot(pi.seq,pi.seq^2, type = "l")
+```
 ###2.b. (2 points)
 Give the ML estimate of $\pi$. Conduct a Wald test and construct a 95% Wald CI for $\pi$. Are these sensible?
+
+#### Solution
+The ML estimate of $\pi = 1$, which is clearly not very sensible.
+```{r}
+wald.est = (1 - .5) / sqrt(1*(1-1)/20)
+ci = 1 + c(-1,1)*1.96*(sqrt(1*(1-1)/20))
+wald.est
+ci
+new.ci = c(ci[1],1)
+```
+Clearly the estimate and confidence interval are not sensible.
 
 ###2.c. (2 points)
 Conduct a score test, reporting the p-value. Construct a 95% score confidence interval. Interpret.
 
+#### Solution
+```{r}
+score.est = (1 - .5) / sqrt(.5*.5 / 20)
+score.ci = 1 + c(-1,1)*1.96*sqrt(.5*.5 / 20)
+1 - pnorm(score.est)
+```
+The p-value is extremely small.  We are 95% confident that the true value for $\pi$ is between `r score.ci`.
+
 ###2.d. (2 points)
 Conduct a likelihood-ratio test and construct a likelihood-based 95% confidence interval. Interpret.
+
+#### Solution
+```{r}
+likel.test = 2*(20*log(2))
+likel.test
+like.ci = c(exp(-1.96^2 / 40) ,exp(1.96^2 / 40))
+like.ci
+like.int = c(like.ci[1],1)
+```
+We are 95% confident that the true probability that a successive trial will be better than the previous is between (`r like.int`).
 
 ###2.e.(2 points)
 Construct an exact binomial test. Interpret.
 
+#### Solution
+```{r}
+binom.test(20,20)
+p.val = binom.test(20,20)$p.value
+p.val
+```
+
+Under the exact binomial test, the probability of observing 20 consecutive tests is $1.907e-06$, which is very low.
+
 ###2.f. (2 points)
 Estimate a 95% HPD interval for $\pi$ when a U[0,1] prior is used. Interpret.
+
+#### Solution
+The U[0,1] prior is equivalent to a beta(1,1) distribution, and thus $\pi | x \sim \text{beta}(x+1,n-x+1) = beta(21,1)$.  If we look at the plot shown of this posterior distribution. It is clear that the HPD will involve 1 as the upper limit.
+```{r}
+curve(dbeta(x,21,1))
+int = betaHPD(21,1.000000001)
+```
+Because this is an HPD, we can speak probabilitistically, which means that there is .95 probability that the probability the next trial is better than the first is between (`r int`).
 
 ## 3. Agresti 1.41 (10 points)
 For the Dirichlet prior for multinomial probabilities, show the Bayesian estimator of the posterior expectation is a weighted average of the prior mean and sample proportions as in Agresti (1.19).
 
+#### Solution
+We know that $\text{E}(\theta_j) = \frac{\alpha_j}{\sum \alpha_k}$ and the sample proportion of a multinomial distribution is $\hat\theta = \frac{n_j}{n}$.  We will use the following to show that the posterior mean $\text{E}(\theta_j | n_1,\ldots,n_j) = \frac{n_j + \alpha_j}{n + \sum \alpha_k}$ is a weighted average of the above values.
+
+\begin{align*}
+\text{E}(\theta_j | n_1,\ldots,n_j) &= \frac{n_j + \alpha_j}{n + \sum \alpha_k} \\
+ &= w \frac{\alpha_j}{\sum \alpha_k}+ (1-w)\frac{n_j}{n} \\
+ &= \frac{\sum \alpha_k}{n + \sum \alpha_k} \frac{\alpha_j}{\sum \alpha_k} + \frac{n}{n + \sum \alpha_k} \frac{n_j}{n} \\
+ &= w \frac{\alpha_j}{\sum \alpha_k}+ (1-w)\frac{n_j}{n} \quad \text{where} \quad w = \frac{\sum \alpha_k}{n + \sum \alpha_k}
+\end{align*}
+
 ## 4. Agresti 2.26 (10 points)
 Show that the OR and RR need not be similar when $\pi_i$ is close to 1.0 for both groups.
 
+### Solution
+```{r}
+pi1 = .999
+pi2 = .99
+or = (pi1 * (1 - pi2)) / (pi2 * (1 - pi1))
+rr = (pi1 / pi2)
+
+med.pi1 =.499
+med.pi2 = .49
+or.med = (med.pi1 *(1 - med.pi2)) / (med.pi2 * (1 - med.pi1))
+rr.med = med.pi1 / med.pi2
+
+c(or,rr)
+c(or.med,rr.med)
+```
+Although this isn't a formal proof or explanation yet, it is clear that when $\pi_i$ is near 1, any difference between the values explodes. However, the same difference at medium values of $\pi_i$ does not yield nearly as strong a difference, and the two estimates seem similar.  But it is clear they are not similar near the boundary of $\pi = 1$.  Also, it is obvious that where $\pi_i$ is near 0, OR and RR will be very similar. 
+
+
+
 ## 5. Agresti 2.28 (10 points)
 In comparing new and standard treatments with success probabilities $\pi_1$ and $\pi_2$, the number needed to treat (NNT) is the number of patients that would need to be treated with the new treatment instead of the standard in order for one patient to benefit. Explain why a natural estimate of this is $\frac{1}{\widehat{\pi}_1-\widehat{\pi}_2}$.
+
+### Solution
+$\frac{1}{\widehat{\pi}_1-\widehat{\pi}_2}$ is a natural estimate of this because NNT is the reciprocal of the risk diifference, which is $\pi_1 - \pi_2$.  The estimator for this risk difference is $\widehat{RR} = \hat\pi_1 - \hat\pi_2$, and thus it would make sense that the estimator for the reciprocal of this would be $\frac{1}{\widehat{RR}} = \frac{1}{\widehat{\pi}_1-\widehat{\pi}_2}$.
 
 ## 6. Periviable infants (12 points total)
 
@@ -62,8 +218,6 @@ Recall the data on outcomes of periviable infants. Of 1348 infants in the study 
 
 
 ```{r , echo=FALSE}
-
-library(ggplot2)
 Neonate <- read.table(
   header=TRUE, text='Years       Outcome Count
 1   2000-2003       SurvNoImp      217
@@ -85,8 +239,71 @@ ggplot(Neonate, aes(factor(Outcome), Count, fill = Years)) +
 ### 6.a. Nominal variables (6 points)
 Provide a formal test of the hypothesis that time period is not associated with outcome. Interpret results of your test in clear language that could be used in a scientific publication.  If there is a change over time, clearly describe the nature of that change.
 
+#### Solution
+We will use a $\chi^2$ test for independence on the cells to test for the association between these nominal time variables.
+```{r}
+tot.sum = sum(Neonate$Count)
+row.sum = c(sum(Neonate$Count[Neonate$Years == "2000-2003"]),
+            sum(Neonate$Count[Neonate$Years == "2004-2007"]),
+            sum(Neonate$Count[Neonate$Years == "2008-2011"]))
+row.sum.tab = rep(row.sum,c(3,3,3))
+col.sum = c(sum(Neonate$Count[Neonate$Outcome == "SurvNoImp"]),
+            sum(Neonate$Count[Neonate$Outcome == "SurvImp"]),
+            sum(Neonate$Count[Neonate$Outcome == "Died"]))
+col.sum.tab = rep(col.sum,3)
+Neonate = cbind(Neonate,row.sum.tab,col.sum.tab)
+obs.mat = matrix(Neonate$Count, nrow = 3, byrow = TRUE)
+exp.counts = row.sum.tab / sum(Neonate$Count) * col.sum.tab / sum(Neonate$Count) * sum(Neonate$Count)
+exp.mat = matrix(exp.counts,nrow = 3, byrow = TRUE)
+colnames(exp.mat) = colnames(obs.mat) = c("SurvNoImp","SuvImp","Died")
+rownames(exp.mat) = rownames(obs.mat) = c("2000-2003","2004-2007","2008-2011")
+Neonate = cbind(Neonate,exp.counts)
+test.chi = sum((Neonate$Count - Neonate$exp.counts)^2 / Neonate$exp.counts)
+test.chi
+1 - pchisq(test.chi , (3-1)*(3-1))
+
+
+```
+
+According to our test statistic and subsequent p-value, it seems like there are some dependencies between these time intervals and the life outcome of the periviable neonates.  LARGE SAMPLE.  NONE are SPARSE
+
 ### 6.b. Ordinal variables (6 points)
 Now assume that the outcomes are ordered so that death is the worst outcome and survival without impairment is the best outcome. Conduct a linear trend test using scores (1,2,3) for time (1=2000-2003) and outcome (3=dead, 2=impaired, 1=survived and not impaired) and interpret the results. Do the results change if we use the outcome weights 100=dead, 10=impaired, 1=survived not impaired?  If so, explain how and why the results differ. Comment on the appropriateness of the scores for both variables.
+
+#### Solution
+
+```{r}
+year.vec = c(rep(1,sum(obs.mat[1,1:3])),
+             rep(2,sum(obs.mat[2,1:3])),
+             rep(3,sum(obs.mat[3,1:3]))
+)
+out.vec = c(rep(c(1,2,3),(obs.mat[1,])),
+            rep(c(1,2,3),(obs.mat[2,])),
+            rep(c(1,2,3),(obs.mat[3,]))
+)
+cor.val = cor(year.vec,out.vec)
+m2 = (cor.val^2) * (sum(Neonate$Count) -1)
+cor.val 
+m2
+1 - pchisq(m2,1)
+```
+Above, we conduct the linear trend test, which is clearly significant as well. When we change the values of the outcome, from (1,2,3) to (1,10,100), the result is still significant, but less so. The p-value is is 0.0012 as compared to 0.000399 from the previous.
+
+```{r}
+year.vec = c(rep(1,sum(obs.mat[1,1:3])),
+             rep(2,sum(obs.mat[2,1:3])),
+             rep(3,sum(obs.mat[3,1:3]))
+)
+out.vec = c(rep(c(1,10,100),(obs.mat[1,])),
+            rep(c(1,10,100),(obs.mat[2,])),
+            rep(c(1,10,100),(obs.mat[3,]))
+)
+cor.val = cor(year.vec,out.vec)
+m2 = (cor.val^2) * (sum(Neonate$Count) -1)
+cor.val 
+m2
+1 - pchisq(m2,1)
+```
 
 ## 7. Oral contraceptives and thromboembolism (8 points)
 
@@ -95,6 +312,17 @@ We consider a retrospective matched pair case-control study of thromboembolism (
 Of the 175 matched pairs, in 10 pairs both cases and controls used oral contraceptives (OC's), in 95 pairs neither used OC's, in 13 pairs only the control used OC's, and in 57 pairs only the case used OC's.
 
 Using the appropriate test, evaluate the null hypothesis that the proportion of cases exposed to OC's is the same as the proportion of controls who are exposed, and provide the p-value for this test. Calculate the OR and exact 95% CI comparing the odds of thromboembolism in OC users to those in non-OC users. Interpret your results.
+
+### Solution
+```{r}
+mcnem.res = mcnemar.exact(matrix(c(10,57,13,95),byrow = TRUE, nrow = 2))
+mcnem.res
+mcnem.p  = mcnem.res$p.value
+mcnem.est = mcnem.res$estimate
+mcnem.confint = mcnem.res$conf.int
+```
+
+To test the null hypothesis that the proportion of cases exposed to OC's is the same as the proportion of controls who are exposed, we will use McNemar's test for paired data.  Using this test, we get the p-value of ($`r mcnem.p`$), which is significant.  Also, we get an estimate of the odds-ratio of `r mcnem.est` with a confidence interval of (`r mcnem.confint`).  This means that we are 95% confident that use of an oral contraceptive is associated with an 2.37 to 8.73 increase of odds of a thromboembolism.
 
 
 ## 8. Passive smoking and cancer risk (15 points)
@@ -105,8 +333,57 @@ Among cases, 120 were exposed to passive smoke but did not smoke themselves; 161
 
 Calculate the conditional odds ratios comparing the odds of being a case by passive smoking exposure status, conditional on active smoking status (active smoker or nonsmoker).  Evaluate whether case status and passive smoking are conditionally independent given active smoking status. Is the association between passive smoking and case status homogeneous across categories of active smoking status?  Provide statistical evidence to support your answers.
 
+### Solution
+```{r}
+smoker.mat = matrix(c(161,117,130,124),byrow= TRUE,nrow = 2)
+non.smoker.mat = matrix(c(120,111,80,155),byrow = TRUE,nrow = 2)
+colnames(smoker.mat) = colnames(non.smoker.mat) = c("Exposure","Not-exposed")
+rownames(smoker.mat) = rownames(non.smoker.mat) = c("Case","Control")
+smoker.mat
+non.smoker.mat
+```
+
+To test the conditional independence of the the groups of cancer-free individuals and individuals with cancers, we will use the Cochran-Mantel-Haenszel test, which is defined as the following $\frac{[\sum_k (n_{11k} - \mu_{11k})]^2}{\sum_k \text{var}(n_{11k})}$, where $\mu_{11k} = \frac{n_{+1k}n_{1+k}}{n_k}$ and var$(n_{11k}) = \frac{n_{1+k} n_{+2k} n_{2+k} n_{+2k}}{n_k^2(n_k - 1)}$.  To begin, in order for this test to be valid, there must be unidirectionality among the odds-ratios.  In our cases $OR_1 = \frac{(161)(124)}{(130)(117)} = 1.313$ and $OR_2 = \frac{(120)(155)}{(80)(111)} = 2.095$ are both greater than 1.  Now note that $\mu_{11,1} \frac{(278)(291)}{532} = 152.06$ and $\mu_{11,2} = \frac{(231)(200)}{466} = 99.14$.  Also, the var($n_{11,1}) = \frac{(278)(254)(291)(241)}{532^2(532-1)} = 32.95$ and var($n_{11,2}) = \frac{(231)(235)(200)(266)}{466^2(466-1)} = 99.14$.  So now using these values in the Cochran-Mantel-Haenszel test, the CSH = $\frac{[(161-152.06) +(120-99.14)]^2}{(32.95+28.6)} = 14.428$, which will follow a $\chi_1^2$.  This means that the p-value according to this test is $0.000146$.  According to this, it seems like these are not conditionally independent because this would mean that assuming case status and pasive smoking are conditionally independent, the probability of obtaining a test statistics as extreme or more extreme between these control and case groups is $.000146$.
+
+To test the homogeneous association, we will use the Breslow-Day test, which tests whether the odds-ratios between the different groups are equal, which would indicate homogeneity.
+
+```{r}
+bres.array = abind(smoker.mat,non.smoker.mat,along = 3)
+BreslowDayTest(bres.array)
+BreslowDayTest(bres.array,correct = TRUE)
+```
+
+According to the Breslow-Day test without correction, the p-value is $0.074$.   According to this, there isn't evidence of non-homegeneity between the two groups of patients.  We can't conclude that the groups aren't homogeneous. Thus, in this case, we can say that conditioning on smoking leads to conditional indepedence, but there isn't homogeneity betwen the smoking levels.
+
 ##9. Exercise without pain! (15 points)
 
 An athletics company produces a new model of running shoe that includes a harder material in the insert to correct for overpronation. The company is worried that the material will cause heel tenderness due to some loss of cushioning with the strike of each step. The company enrolled 87 runners and asked them about occasional heel tenderness at study entry and then again after using the new shoe for one month. The company would like to know whether the proportion of runners with occasional heel tenderness is the same before the study and after using the study shoe for one month. 
 
 Analyze the data and produce a professional report (as part of this document) providing statistical evidence that addresses the question of interest to the company. Data are in the file dontbeaheel.xlsx. 
+
+### Solution
+
+```{r}
+heel = read.xlsx("C:/Users/Zachary/Desktop/Fall_2017_PRojects/STA_841/STA_841_cat/HW01/dontbeaheel.xlsx",stringsAsFactors = FALSE,1)
+table(heel$Occasion,heel$Pain)
+before = heel$Pain[heel$Occasion == "Before"]
+after = heel$Pain[heel$Occasion == "After"]
+id = unique(heel$ID)
+new.mat = as.data.frame(cbind(id,before,after))
+table(new.mat$before,new.mat$after)
+
+cont.mat = matrix(c(19,5,15,48),byrow = TRUE, nrow = 2)
+rownames(cont.mat) = colnames(cont.mat) = c("yes","no")
+
+mcnem.res = mcnemar.exact(matrix(c(19,5,15,48),byrow = TRUE, nrow = 2))
+mcnem.res
+mcnem.p  = mcnem.res$p.value
+mcnem.est = mcnem.res$estimate
+mcnem.confint = mcnem.res$conf.int
+
+```
+We seek to understand whether or not the newly produced running shoe causes heel tenderness in its users.  This new shoe loses some cushioning previously models had, and we will analyze a study of 87 runners to understand the effect of this cange in model.  This design of this study is a classic design where we collect whether or not an individual experiences heel pain, both before and after they use the new model of shoe.  Through this design, we have both a baseline and follow-up to understand how their pain can change based on these new shoes.  Specifically, we will be interested in the discordant pairs, which are the individuals whose pain experience changes from before and after the shoe use (i.e. pain before and none after, no pain before but pain after).  We will use McNemar's test to analyze these discordant pairs.
+
+McNemar's test leverages these discordant pairs, which are the individuals of interest because it is not important to us if an individual's pain experience does not change.  This would mean that these shoes do not have an effect on the individual for better or for worse. McNemar's test statistic $X^2 = \frac{(b-c)^2}{b+c}$ compares these discordant pairs and measures how far $b$ is from $c$.  If there is not a difference from before and after the new shoe use, then $b-c = 0$, which would mean $X^2 = 0$.  When we perform this analysis, we know that 5 individual experienced pain before and no pain after while 15 experienced no pain before but pain after.
+
+Using these numbers, we can find a p-value and a confidence interval for the odds-ratio.  The p-value in our case is equal to `r mcnem.p`.  This means that we would reject the hypothesis that there is no difference from before and after the new shoe use.  According to the results of the confidence interval, we are 95% confident that the new shoe is associated with 0.095 to 0.964 decreased odds of experiencing heel pain.  This would indicate that the shoe is even associated with less heel pain, instead of more, which was initially suspected.
