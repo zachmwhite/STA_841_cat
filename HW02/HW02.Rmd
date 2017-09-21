@@ -7,6 +7,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
 ```
 
 ## Provide clearly documented code in an R markdown document where appropriate. Whenever possible, provide statistical evidence to support your answers.
@@ -20,21 +21,146 @@ Use $M_0$ to denote an intercept only logistic regression model, and use $M_1$ t
 ###1a.
 Fit $M_0$ and $M_1$ for each data format, and report $L_0$ and $L_1$ in each case. Note the data format does not affect the values of $L_0$ and $L_1$.
 
+#### Solution
+```{r}
+# Ungrouped
+y = c(1,0,0,0,1,1,0,0,1,1,1,1)
+x = c(0,0,0,0,1,1,1,1,2,2,2,2)
+Y.ungroup = cbind(y,c(1-y))
+int.x = glm(y~x,family = binomial(link = logit))
+int.only = glm(y~1, family = binomial(link = logit))
+int.x$fitted.values
+int.only$fitted.values
+# Grouped
+group.y.succ = c(1,2,4)
+group.y.fail = c(3,2,0)
+Y.group = cbind(group.y.succ,group.y.fail)
+group.x = c(0,1,2)
+group.x.mod = glm(cbind(group.y.succ,group.y.fail)~group.x, family = binomial(link = logit))
+group.int.only = glm(cbind(group.y.succ,group.y.fail)~1,family = binomial(link = logit))
+
+#logLik(int.x);logLik(int.only)
+#logLik(group.x.mod); logLik(group.int.only)
+
+inv.logit <- function(x) { exp(x) / (1+exp(x))}
+nloglike <- function(Y,X,a,b) {
+  L <- 0
+  n = length(X)
+  for (i in 1:n){
+     L <- L + sum(Y[i,1]*log(inv.logit(a+b*X[i])) + 
+               Y[i,2]*log(1-inv.logit(a+b*X[i])))
+  }
+ return(-L) 
+} 
+x.un.like = nloglike(Y.ungroup,x,coef(int.x)[1],coef(int.x)[2])
+x.group.like = nloglike(Y.group,group.x,coef(group.x.mod)[1],coef(group.x.mod)[2])
+int.un.like = nloglike(Y.ungroup,x,coef(int.only)[1],0)
+int.group.like = nloglike(Y.group,group.x,coef(group.int.only)[1],0)
+
+likelihood.mat = matrix(c(x.un.like,x.group.like,int.un.like,int.group.like),byrow = TRUE,nrow = 2)
+colnames(likelihood.mat) = c("Ungrouped","Grouped")
+rownames(likelihood.mat) = c("Full","Intercept")
+kable(likelihood.mat)
+```
+I created my own function to calculate the log likelihod, and there is no difference between the likelihoods.  This can easily be shown using the actual likelihoods with the data we are given.  
+
 ###1b.
 Show that the deviances for $M_0$ and $M_1$ differ for the two data formats. Why is this?  (Hint: Consider the number of parameters in the saturated model for each case.)
+
+
+#### Solution
+```{r}
+int.x$deviance; int.only$deviance
+group.x.mod$deviance; group.int.only$deviance
+
+```
 
 ###1c.
 Show that the difference between the deviances for $M_0$ and $M_1$ is the same regardless of data format. Why is this?  This result implies that for testing for the effect of $x$, the data format does not matter, though it does matter for testing goodness of fit versus the saturated model.
 
+#### Solution
+```{r}
+anova.ungroup = anova(int.only,int.x,test = "Chisq")
+anova.grouped = anova(group.int.only,group.x.mod,test = "Chisq")
+anova.ungroup$Deviance
+anova.grouped$Deviance
+```
+
 ##2. Cellular differentiation (20 points)
 Using the cellular differentiation data from class, fit a Poisson regression model with IFN as a nominal categorical variable and interaction terms between IFN and TNF (a saturated model).  Assess whether the interaction terms provide significant improvement to the model and diagnose any problems encountered in estimation. Using the main effects model, evaluate whether IFN is best treated as a nominal categorical variable or by fitting a linear trend in IFN dose.
+
+### Solution
+```{r}
+celldiff = c(11,18,20,39,22,38,52,69)
+TNF = c(10,10,10,10,100,100,100,100)
+TNF.cat = as.factor(TNF)
+IFN = c(0,4,20,100,0,4,20,100)
+IFN.cat = as.factor(IFN)
+m.cat.full = glm(celldiff~TNF + IFN.cat + TNF:IFN.cat, family = poisson(link = log))
+sum.cat.full = summary(m.cat.full)
+
+m.cat = glm(celldiff~TNF + IFN.cat, family = poisson(link = log))
+sum.cat = summary(m.cat)
+anova(m.cat,m.cat.full,test = "Chisq")
+
+m.cont = glm(celldiff~TNF + IFN, family = poisson(link=log))
+summary(m.cont)
+
+anova(m.cat,m.cont,test = "Chisq")
+```
+I treat the other variable TNF as continuous or this problem.  When comparing the categorical to continuous, the only significant category of IFN is 100 U/ml, which is a lot.  However, when we treat IFN as continuous, the coefficient is significant according to a Wald test.  When I think about reconciling these two ideas, it could be that we really start to see the effects of IFN as the dosage gets to be pretty high. In neither of the models are the interactions significant. 
+
+Interaction
+
+Base model. Continuous is better.
+
+Zero degrees of freedom.  Somethings got to be wrong.  These are counts. with the 
 
 ##3. Negative binomial distribution (20 points)
 ###3a. Negative binomial as Poisson-Gamma mixture
 Consider the negative binomial distribution, $$f(y \mid p, r)={{r+y-1}\choose{y}} p^r (1-p)^y.$$ Suppose we have a Poisson random variable Y where $y \mid \lambda \sim$ Poisson and $\lambda \sim \text{Gamma}(\alpha,\beta)$. Show the negative binomial distribution can be derived as a Poisson-gamma mixture by integrating $\lambda$ out of the joint likelihood $Pr(y,\lambda)=Pr(y \mid \lambda)Pr(\lambda)$. 
 
+#### Solution
+
+\begin{align*}
+f(y \mid p, r)&={{r+y-1}\choose{y}} p^r (1-p)^y \\
+p(y \mid \lambda) = \frac{e^{-\lambda}\lambda^y}{y!} &\quad \pi(\lambda) = \frac{\beta^{\alpha}}{
+\Gamma(\alpha)} \lambda^{\alpha-1}\exp{-\beta\lambda} \\
+Pr(y,\lambda) &= \frac{e^{-\lambda}\lambda^y}{y!}\frac{\beta^{\alpha}}{
+\Gamma(\alpha)} \lambda^{\alpha-1}\exp\{-\beta\lambda\} \\
+Pr(y \mid \alpha,\beta) &= \int_{\lambda} \frac{e^{-\lambda}\lambda^y}{y!}\frac{\beta^{\alpha}}{
+\Gamma(\alpha)} \lambda^{\alpha-1}\exp\{-\beta\lambda\}d\lambda \\
+&= \frac{\beta^{\alpha}}{ \Gamma(\alpha)y!} \int_{\lambda} \lambda^{y+\alpha-1}\exp\{-\lambda(\beta+1)\}d\lambda \\
+&=\frac{\beta^{\alpha}}{ \Gamma(\alpha)y!}  \frac{\Gamma(y+\alpha)}{(\beta+1)^{y+\alpha}} \int_{\lambda} \frac{ (\beta+1)^{y+\alpha}}{\Gamma(y+\alpha)} \lambda^{y+\alpha-1}\exp\{-\lambda(\beta+1)\}d\lambda \\
+&=\frac{\beta^{\alpha}}{(\beta+1)^{y}(\beta+1)^{\alpha}}  \frac{\Gamma(y+\alpha)}{\Gamma(\alpha)y!} \\
+&= \frac{\Gamma(y+\alpha)}{\Gamma(\alpha)y!} (\frac{\beta}{\beta+1})^\alpha (\frac{1}{\beta+1})^y \\
+\text{Note that   } \frac{\Gamma(y+\alpha)}{\Gamma(\alpha)y!} &= \frac{(y+\alpha-1)(y+\alpha-2)\ldots(y+\alpha-y)\Gamma(\alpha)}{\Gamma(\alpha)y!} = \binom{\alpha+y-1}{y}\\
+&= \binom{\alpha+y-1}{y}(\frac{\beta}{\beta+1})^\alpha (1 - \frac{\beta}{\beta+1})^y \\
+\text{So clearly   } \alpha = r \text{ and  } p = \frac{\beta}{\beta + 1} 
+\end{align*}
+
 ###3b. Exponential family formulation when $r$ known
 Show the negative binomial distribution  is a member of the exponential family when $r$ is known but not when $r$ is unknown.
+
+#### Solution
+To begin, I show that when $r$ is known, the negative binomial is in the eponential family. Note that the form of the exponential family is as follows:$$ h(x)\exp\{\eta(\theta)T(X) - A(\eta)\}$$
+\begin{align*}
+f(y \mid p, r)&={{r+y-1}\choose{y}} p^r (1-p)^y \\
+&= {{r+y-1}\choose{y}} \exp\{r\log p + y\log(1-p)\} \\
+\text{Let } \theta &= log(1-p) \rightarrow p = 1 - e^{\theta} \\
+&= {{r+y-1}\choose{y}} \exp\{r\log(1 - e^{\theta}) + y\theta\} \\
+&= {{r+y-1}\choose{y}} \exp\{y\theta\ - (-r\log(1 - e^{\theta})) \}
+\end{align*}
+
+So note $\eta(\theta) = \log(1-p)$, $T(X)=y$, $A(\eta) = -r\log(1-e^{\theta})$, and $h(x) = \binom{r+y-1}{y}$ .  So when $r$ is known, this is an exponential family.  However, when $r$ is not known, this cannot be shown, as follows.
+\begin{align*}
+f(y \mid p, r)&={{r+y-1}\choose{y}} p^r (1-p)^y \\
+&= \exp\{\log({{r+y-1}\choose{y}} p^r (1-p)^y) \} \\
+&= \exp\{\log{{r+y-1}\choose{y}} + r\log(p) + y\log (1-p) \} \\
+&=\exp\{\log(\frac{(r+y-1)!}{(r-1)!y!})\}\exp\{r\log(p) + y\log (1-p) \} \\
+&= \frac{(y+r-1)\ldots(y+1)}{(r-1)!}\exp\{r\log(p) + y\log (1-p) \}
+\end{align*}
+We can't reconcile the factorial to get it into an exponential form.
 
 ##4. Hospital Performance (30 points)
 The Centers for Medicare and Medicaid Services (CMS) is required by Congress to evaluate
@@ -43,7 +169,12 @@ New York State from 2008-2011. The outcome of interest is mortality within 30 da
 procedure, and variables available in the dataset include hospital name, procedure type (the CABG procedure is simpler than valve replacement), number of cases/procedures, number of deaths, and expected mortality rate per 100 cases (this variable adjusts for case mix or perceived difficulty of the procedures related to patient characteristics, e.g. some hospitals may see rich, healthy patients while others see patients who have limited resources to devote to medical care). Assume each line in the dataset represents data contributed by a different physician (physician names are not included).  The data are in the file cardiacsurgery.csv.
 
 ###4a. Model fitting and interpretation
-Treating each row of the excel spreadsheet as an observation from a binomial distribution with number of failures equal to the number of deaths and number of trials equal to the number of cases/procedures, fit a GLM exploring the contributions of the hospital, region, procedure, and case mix to the mortality rate. Use analysis of deviance to select the most appropriate model for the data, specify your preferred model clearly in equation form, and provide clear interpretations of all parameter estimates. 
+Treating each row of the excel spreadsheet as an observation from a binomial distribution with number of failures equal to the number of deaths and number of trials equal to the number of cases/procedures, fit a GLM exploring the contributions of the hospital, region, procedure, and case mix to the mortality rate. Use analysis of deviance to select the most appropriate model for the data, specify your preferred model clearly in equation form, and provide clear interpretations of all parameter estimates.
+
+```{r}
+cardiac = read.csv("C:/Users/Zachary/Desktop/Fall_2017_Projects/STA_841/STA_841_cat/HW02/cardiacsurgery.csv",header = TRUE)
+
+```
 
 ###4b. Hospital rankings
 If you are tasked with recognizing "high-achieving" and "low-achieving" hospitals for CMS, which hospitals would you select, and why? Provide a detailed statistical justification for your choice.

@@ -96,6 +96,8 @@ kable(quant.mat)
 
 It seems clear that this does not represent historical rates and there is a difference.  None of the historical rates are in the credible intervals for the data under any of my priors.
 
+Comments from TA: -2. You should describe your methods and results. You present all your code and output. I need to check all your code to figure out what you intended to do. -1. Your graph is not informative. One may want to show that the observed data is against the null hypothesis. You only plot the posteriors under different priors but did not compare them with the null.
+
 ## 2. Agresti 1.7 (12 points total)
 Complete the given parts and add part f, given below. In a crossover trial comparing a new drug to a standard, $\pi$ denotes the probability that the new one is judged better. It is desired to estimate $\pi$ and to test $H_0: \pi=0.50$ against $H_a: \pi \neq 0.50$. In 20 independent observations, the new drug is better each time.
 
@@ -107,8 +109,12 @@ The likelihood is $\pi^20$, which is not quadratic.
 
 ```{r}
 pi.seq = seq(0,1,by = .01)
-plot(pi.seq,pi.seq^2, type = "l")
+plot(pi.seq,pi.seq^20, type = "l")
 ```
+
+Comments
+-1. You plot x^2 but not x^(20). obviously.  Why did I do this?
+
 ###2.b. (2 points)
 Give the ML estimate of $\pi$. Conduct a Wald test and construct a 95% Wald CI for $\pi$. Are these sensible?
 

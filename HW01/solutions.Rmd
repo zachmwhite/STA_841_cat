@@ -1,0 +1,555 @@
+---
+title: "<center> <h1>Sample Solution for Homework 1</h1> </center>"
+author: "<center> <h3>Xu Chen</h3> </center>"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+options(knitr.table.format = "html") 
+```
+
+<br />
+
+## 1. Analysis of periviable neonates (8 points)
+
+In a 2017 New England Journal of Medicine paper, Duke researchers examined outcomes of infants born at 22-24 weeks of gestation.  Of 1348 infants in the study born at these gestational ages in 2008-2011, 861 died, 211 survived with neurodevelopmental impairment, and 276 survived without neurodevelopmental impairment.
+
+```{r , echo=FALSE, fig.align='center'}
+out20082011=c(276,211,861)
+barplot(out20082011,names.arg=c('Survived; No Impairment','Survived; Impaired','Died'),xlab='Outcome',ylab='Count',main='Infant Outcomes 2008-2011',col='blue')
+```
+
+
+<!-- full data 2000-2003 967 death 207 surv impair 217 surv no impair 1391 total
+2004-2007 1076 death 209 surv impair 250 surv no impair 1535 total -->
+
+Suppose historical rates of all three outcomes (from the early 2000's) are 15% survival without impairment, 15% survival with impairment, and 70% death. 
+
+**(a)** Estimate the proportions of infants surviving without impairment, surviving with impairment, and dying, providing point and interval estimates. 
+
+----
+
+Here we use MLE as point estimate. Let $\pi_1, \pi_2$ and $\pi_3$ denote the proportion of infants surviving without impairment, surviving with impairment, and dying respectively. The MLEs are given by
+$$\hat{\pi}_i=\frac{n_i}{n}\qquad \text{for $i=1,2,3$}$$
+
+```{r}
+n <- 1348
+ni <- c(276, 211, 861)
+pi.hat <- ni / n
+print(pi.hat)
+```
+<!-- Therefore, the MLEs are $\hat{\pi}_1=0.2047,\hat{\pi}_2=0.1565$ and $\hat{\pi}_3=0.6387$. -->
+
+<!-- #### Individual confidence interval -->
+
+
+The marginal distributions of the number of infants surviving without impairment, surviving with impairment, and dying are binomial distributions. One may construct confidence intervals for these three proportions *individually* using Wald, score or likelihood ratio test statistics. We provide Wald intervals for $\pi_1,\pi_2$ and $\pi_3$. Exact confidence interval (CI) and CIs based on score and likelihood ratio test statistics for $\pi_1$ are included to illustrate how to compute them in practice.
+
+A 95\% Wald confidence interval (CI) of $\pi_i$ is given by
+$$\left[\hat{\pi}_i- z_{0.025}\sqrt{\frac{\hat{\pi}_i(1-\hat{\pi}_i)}{n}},\hat{\pi}_i+ z_{0.025}\sqrt{\frac{\hat{\pi}_i(1-\hat{\pi}_i)}{n}}\right]$$
+```{r}
+wald.ci <- pi.hat + (qnorm(0.975) * sqrt(pi.hat * (1 - pi.hat)/n))%o%c(-1,1)
+wald.ci
+```
+
+##### Exact CI
+A 95\% Clopper-Pearson CI for $\pi_1$ is constructed by
+$$\left\{\pi_1:\sum_{k=0}^{n_1}\binom{n}{k}\pi_1^k(1-\pi_1)^{n-k}>\frac{0.05}{2}\quad\text{and}\quad\sum_{k=n_1}^n\binom{n}{k}\pi_1^k(1-\pi_1)^{n-k}>\frac{0.05}{2}\right\}$$
+Using the formula in section 16.6.1 in @agresti2013, this interval is
+```{r}
+1/c((1+(n-ni[1]+1)/ni[1]/qf(1-0.975,df1 = 2*ni[1],df2=2*(n-ni[1]+1))),(1+(n-ni[1])/(ni[1]+1)/qf(1-0.025,df1=2*(ni[1]+1),df2=2*(n-ni[1]))))
+```
+`binom.test` can also be used. 
+```{r}
+binom.test(x=ni[1],n=n)$conf.int
+```
+
+##### Score CI
+A 95\% CI of $\pi_1$ based on score test statistic is given by inverting the test as follows
+$$\left\{\pi_1:\left|\frac{\hat{\pi}_1-\pi_1}{\sqrt{\pi_1(1-\pi_1)/n}}\right|<z_{0.025}\right\}.$$
+We need to solve a quadratic equation for $\pi_1$ to find the endpoints of the interval or directly use formula (1.14) in @agresti2013. 
+```{r}
+a <- (n + qchisq(0.95, 1)) / n
+b <- -qchisq(0.95, 1) / n - 2 * ni[1] / n
+c <- ni[1] ^ 2 / n ^ 2
+(-b + c(-1, 1) * sqrt(b ^ 2 - 4 * a * c)) / 2 / a
+```
+`prop.test` can be used for score CI.
+```{r}
+prop.test(x=ni[1],n=n,correct = F)$conf.int
+```
+
+
+##### Likelihood ratio CI
+
+A 95\% CI based on likelihood ratio test is 
+$$\left\{\pi_1: 2\left[n_1\log\frac{\hat{\pi}_1}{\pi_1}+(n-n_1)\log\frac{1-\hat{\pi}_1}{1-\pi_1} \right]<\chi^2_1(0.05)\right\}$$
+```{r}
+LR <- function(pi1, n1, n, alpha){
+  pi1.hat <- n1 / n
+  2 * (n1 * log(pi1.hat / pi1) + (n - n1) * log((1 - pi1.hat) / (1 - pi1))) - qchisq(1 - alpha, 1)
+}
+c(uniroot(f=LR, interval = c(0.1,0.2), n1=ni[1],n=n,alpha=0.05)$root, uniroot(f=LR, interval = c(0.2,0.3), n1=ni[1],n=n,alpha=0.05)$root)
+```
+It is clear that different types of CIs are quite similar as counts in all categories are moderate and hence normal approximation is appropriate.
+
+<!-- #### Simultaneous confidence interval -->
+
+<!-- When computing *simultaneous* CIs for $\pi_1,\pi_2$ and $\pi_3$, corrections are needed. We adopt a score-type interval using Bonferroni correction given by the formula in problem 1.36: -->
+<!-- $$(\hat{\pi}_i-\pi_i)^2/[\pi_i(1-\pi_i)/n]=z_{\alpha/2c}^2\qquad j=1,2,...,c$$ -->
+<!-- where $c$ is the number of possible outcomes. -->
+
+
+**(b)** Evaluate the hypothesis that the current rates are equal to the historical rates of 15, 15, and 70%, respectively, using the multinomial distribution. 
+
+----
+
+##### Pearson $\chi^2$ test
+<!-- $$\chi^2=\sum_{j=1}^3\frac{(n_j-\mu_j)^2}{\mu_j}=34.5495$$ -->
+```{r,echo=T}
+chisq.test(x=ni,p=c(0.15,0.15,0.7))
+```
+The $p$-value is $3.15\times 10^{-8}$.
+
+##### Likelihood ratio $\chi^2$ test
+$$G^2=2\sum_{j=1}^3n_j\log(n_j/\mu_j)=31.9801$$
+```{r,echo=T}
+chisq.lr <- 2*sum(ni*log(ni/n/c(0.15,0.15,0.7)))
+1-pchisq(chisq.lr,2)
+```
+The $p$-value is $1.14\times 10^{-7}$. 
+
+Therefore, the $p$-values given by both tests are very small and the null hypothesis is rejected under level $\alpha=0.05$. The data provides significant evidence that the proportions in recent years are not equal to the historical rates.
+
+**(c)** Display results using informative graphics.
+
+----
+
+The small $p$-value indicates that the data provides evidence against the null hypothesis. Informative graphs should capture the departure from data to null hypothesis. A histogram comparing observed counts and expected counts under the null and a graph showing CIs of some multinomial parameters does not cover the null are typical choices. 
+
+(1) The histogram below compares expected counts and obeserved counts for all categories.
+```{r, echo=FALSE, fig.align='center'}
+library(ggplot2)
+neonates = data.frame(count=c(ni,n*c(0.15,0.15,0.7)),
+                       outcome = c('SurvNoImp','SurvImp','Died','SurvNoImp','SurvImp','Died'),
+                       group=c('observed','observed','observed','expected','expected','expected'))
+neonates$outcome <- factor(neonates$outcome, levels = unique(neonates$outcome))
+ggplot(neonates, aes(outcome, count, fill = group )) +
+  geom_bar(stat="identity", position = "dodge") +
+  scale_fill_brewer(palette = "Set1")
+```
+(2) Here we plot the point estimates and 95\% Wald intervals against the values of parameters under the null hypothesis. Clearly, Wald intervals of $\pi_1$ and $\pi_3$ do not cover the values of parameters under the null hypothesis.
+```{r, echo = F, fig.align='center',fig.width=7.1}
+df <- data.frame(category = c("SurvNoImp", "SurvImp", "Died"), point = pi.hat,
+                            lower = wald.ci[,1],
+                            upper = wald.ci[,2],
+                            null = c(.15, .15, .7))
+df$category <- factor(df$category, levels = unique(df$category))
+ggplot(df, aes(x=category)) + geom_pointrange(aes(y = point, ymin = lower, ymax = upper, color=category))  + theme_bw() + geom_point(aes(y = null)) + ylab("Proportion") + xlab('Category')
+```
+
+
+(3) We provide a ternary graph of multinomial parameters given by MLE and null hypothesis. On each edge of this triangle, we plot the 95\% Wald interval (purple line segment) of the parameter. Again, two of the CIs do not cover the values of parameters under the null hypothesis.
+```{r, echo=F, fig.align='center',warning=F,message=F}
+library(ggtern)
+df = data.frame(pi_1 = c(0.15,ni[1]/n), pi_2 = c(0.15,ni[2]/n),
+                pi_3 = c(0.7,ni[3]/n), color = factor(c('H_0','MLE')))
+df2 <- data.frame(x=c(0.1832,0,1-0.6131),y=c(1-0.1832,0.1371,0),z=c(0,1-0.1371,0.6131),xend=c(0.2263,0,1-0.6644),yend=c(1-0.2263,0.1759,0),zend=c(0,1-0.1759,0.6644))
+nv=0.05
+pn = position_nudge_tern(y=nv,x=-nv/2,z=-nv/2)
+breaks = seq(0,1,by=0.2)
+base = ggtern(df,aes(pi_1,pi_2,pi_3,color=color)) + 
+  geom_point(size=2) +  
+  theme_showarrows() + theme_showlatex() + theme_custom(base_size = 15, tern.panel.background = 'lightblue1', col.T='#fe8f0f', col.L = '#f7325e', col.R = '#7dc410')  +
+  theme_legend_position('topleft') + 
+  theme(legend.title=element_blank()) +
+  limit_tern(breaks=breaks,labels=breaks) + 
+  geom_Tmark() + geom_Rmark() + geom_Lmark() + xlab(expression(pi[1])) + ylab(expression(pi[2])) + zlab(expression(pi[3])) +
+  Tarrowlab('pi_2') + Rarrowlab('pi_3') + Larrowlab('pi_1') + geom_point(aes(x=x, y=y, z=z),data=df2,color='purple',size=1) + 
+  geom_point(aes(x=xend, y=yend, z=zend),data=df2,color='blue',size=1) + 
+geom_segment(data=df2, mapping=aes(x=x, y=y, z=z, xend=xend, yend=yend,zend=zend), size=1, color='blue') 
+A = base + annotate("text", x=c(0.14,0.3), y=c(0.08,0.18), z=c(0.78,0.52), label=c("H[0]",'MLE'), parse=TRUE)  
+print(A)
+```
+<br>
+
+## 2. Agresti 1.7 (12 points total)
+Complete the given parts and add part f, given below. In a crossover trial comparing a new drug to a standard, $\pi$ denotes the probability that the new one is judged better. It is desired to estimate $\pi$ and to test $H_0: \pi=0.50$ against $H_a: \pi \neq 0.50$. In 20 independent observations, the new drug is better each time.
+
+###2.a. (2 points)
+Plot the likelihood function. Is it close to the quadratic shape that large-sample normal approximations utilize?
+
+----
+
+The likelihood function is given by
+$$\ell(\pi)=\binom{20}{20}\pi^{20}(1-\pi)^{20-20}=\pi^{20}$$
+```{r,echo=F,fig.align='center',fig.height=4.5,fig.width=4.5}
+xaxis <- seq(0,1,0.001)
+plot(xaxis,xaxis^20,col='grey',lwd=2,type = 'l',xlab =expression(pi),ylab=expression('\u2113'(pi)))
+# expression(pi),ylab=expression('\u2113'(pi)))
+```
+Clearly, the likelihood function does not exhibit a quadratic shape and hence large-sample normal approximation is not appropriate here.
+
+###2.b. (2 points)
+Give the ML estimate of $\pi$. Conduct a Wald test and construct a 95% Wald CI for $\pi$. Are these sensible?
+
+----
+
+The ML estimate of $\pi$ is 1. Since $\hat{\pi}=1$, the Wald test statistic is
+$z_W=\frac{\hat{\pi}-\pi_0}{\sqrt{\hat{\pi}(1-\hat{\pi})/n}}=+\infty$ and hence $p$-value is 0. A 95\% Wald confidence interval degenerates to a point at $\hat{\pi}=1$. 
+
+Both of the results are not sensible because Wald test or interval are based on valid normal approximation. However, as shown in part (a), normal approximation is no longer valid in this example. Two results are overconfident and misleading as extreme situation occurs. 
+
+###2.c. (2 points)
+Conduct a score test, reporting the p-value. Construct a 95% score confidence interval. Interpret.
+
+----
+
+```{r}
+score.test <- prop.test(x=20,n=20,correct=F)
+score.test$p.value
+score.test$conf.int
+```
+
+The $p$-value is $7.74\times 10^{-6}$. Data exhibits significant evidence against the null indicating the proportion is not 0.5 and we reject the null hypothesis under level $\alpha=0.05$. A 95\% score CI is $(0.8389,1)$ which is more reasonable than the Wald CI.
+
+###2.d. (2 points)
+Conduct a likelihood-ratio test and construct a likelihood-based 95% confidence interval. Interpret.
+
+----
+
+The likelihood-ratio test statistic is 
+$$-2(L_0-L_1)=2\left[y\log\frac{y}{n\pi_0}+(n-y)\log\frac{n-y}{n-n\pi_0}\right]=2\left[20\log\frac{20}{10}\right]=27.7259$$
+```{r,echo=T}
+chisq.lr <- 40*log(2)
+pval.lr <- 1-pchisq(chisq.lr,df=1)
+```
+The $p$-value is $1.398\times 10^{-7}$.
+
+A 95\% confidence interval based on likelihood-ratio test statistic is 
+\begin{align*}
+2\left[y\log\frac{y}{n\pi}+(n-y)\log\frac{n-y}{n-n\pi}\right]&< \chi^2_1(0.05)\\
+2(-20\log\pi)&< \chi^2_1(0.05)\\
+\pi&> 0.9084
+\end{align*}
+```{r,echo=T}
+exp(-qchisq(0.95,1)/40)
+```
+Therefore, a 95\% likelihood-ratio confidence interval is $(0.9084,1)$. The $p$-value is smaller and CI is narrower than those given by score test. 
+
+
+###2.e.(2 points)
+Construct an exact binomial test. Interpret.
+
+----
+
+Since the binomial distribution under the null hypothesis is symmetric, the exact $p$-value is given by
+$$p=\textsf{P}_{H_0}(y\geqslant 20)+\textsf{P}_{H_0}(y\leqslant 0)=2\binom{20}{20}0.5^{20}=1.907\times10^{-6}$$
+```{r,echo=T}
+2*0.5^20
+```
+One may also use `binom.test` directly.
+```{r}
+binom.test(x=20,n=20,alternative = 'two.sided')
+```
+Therefore we reject the null hypothesis under level $\alpha=0.05$. Exact binomial test is more reliable and preferred here since the sample size is small. The confidence interval and $p$-value are close to those given by the score test.
+
+###2.f. (2 points)
+Estimate a 95% HPD interval for $\pi$ when a U[0,1] prior is used. Interpret.
+
+----
+
+When using a $\textsf{U}[0,1]$ prior, the posterior is given by
+\begin{align*}
+p(\pi\mid y)&\propto p(y\mid\pi)p(\pi)\\
+&\propto\pi^{20}
+\end{align*}
+Hence $\pi\mid y\sim\textsf{Be}(21,1)$. Since $p(\pi\mid y)$ is monotone increasing in [0,1], a HPD interval must be of the form $[l,1]$. The lower bound is given by
+```{r,echo=T}
+qbeta(0.05,21,1)
+```
+Therefore, a 95\% HPD interval is given by (0.8671,1) which is close to the CI given by exact test. Bayesian method is relatively robust when observed data is extreme.
+
+<br>
+
+## 3. Agresti 1.41 (10 points)
+For the Dirichlet prior for multinomial probabilities, show the Bayesian estimator of the posterior expectation is a weighted average of the prior mean and sample proportions as in Agresti (1.19).
+
+----
+*Proof*. Suppose the multinomial probabilities $\boldsymbol{\pi}=(\pi_1,\dots,\pi_c)$ have Dirichlet prior $\textsf{Dir}(\alpha_1,\dots,\alpha_c)$. Let $(n_1,\dots,n_c)$ denote cell counts from the multinomial distribution $\boldsymbol{\pi}$. Then the posterior density of $\boldsymbol{\pi}$ is
+\begin{align*}
+p(\boldsymbol{\pi} \mid n_1,\dots,n_c) &\propto \prod_{i=1}^{c} \pi_i^{n_i} \prod_{i=1}^{c} \pi_i^{\alpha_i - 1} \\
+  &= \prod_{i=1}^c \pi_i^{n_i + \alpha_i - 1}
+\end{align*}
+
+
+Hence the posterior distribution of $\boldsymbol{\pi}$ is $\textsf{Dir}(n_1+\alpha_1,\dots,n_c+\alpha_c)$, which has mean 
+$$\textsf{E}(\pi_i \mid n_1,\dots,n_c) = \dfrac{n_i + \alpha_i}{n+K}$$
+where $n=\sum_{i=1}^{c} n_i$, $K=\sum_{i=1}^{c} \alpha_i$.
+
+Let $p_i = n_i/n$ and $\gamma_i = \alpha_i/K$. We have
+\begin{align*}
+\textsf{E}(\pi_i \mid n_1,\dots,n_c) &= \dfrac{n_i}{n+K} + \dfrac{\alpha_i}{n+K} \\
+  & = \dfrac{n}{n+K}\cdot p_i + \dfrac{K}{n+K}\cdot \gamma_i
+\end{align*}
+Therefore the posterior mean of $\pi_i$ is a weighted average of sample proportion $p_i$ and prior mean $\gamma_i$.
+
+<br>
+
+## 4. Agresti 2.26 (10 points)
+Show that the OR and RR need not be similar when $\pi_i$ is close to 1.0 for both groups.
+
+----
+
+According to the definitions of RR and OR, we have
+$$\text{RR}=\frac{1-\pi_1}{1-\pi_2}\text{OR}.$$
+When $\pi_1$ and $\pi_2$ are close to 1.0, the range of $\dfrac{1-\pi_1}{1-\pi_2}$ is large. For example, when $\pi_1=1-10^{-2}$ and $\pi_2=1-10^{-5}$, then $\text{RR}\approx 1$ but $\text{OR}\approx 10^{-3}$. If $\pi_1=1-10^{-5}$ and $\pi_2=1-10^{-2}$, then $\text{RR}$ is still approximately 1 but $\text{OR}\approx 10^{3}$. 
+
+<br>
+
+## 5. Agresti 2.28 (10 points)
+In comparing new and standard treatments with success probabilities $\pi_1$ and $\pi_2$, the number needed to treat (NNT) is the number of patients that would need to be treated with the new treatment instead of the standard in order for one patient to benefit. Explain why a natural estimate of this is $\frac{1}{\widehat{\pi}_1-\widehat{\pi}_2}$.
+
+----
+
+Let $n$ denote the number needed to treat and $\hat{\pi}_1$ and $\hat{\pi}_2$ are estimates of $\pi_1$ and $\pi_2$ respectively. Then if standard treatments are used on $n$ patients, we may expect $n\hat{\pi}_2$ patients recover. Similarly, we expect $n\hat{\pi}_1$ patients recover using the new treatment. Therefore, if supposing $\pi_1$ is larger than $\pi_2$, in order to get one more recovery patient, we need to have $n\hat{\pi}_1-n\hat{\pi}_2=1$ which is $n=\dfrac{1}{\hat{\pi}_1-\hat{\pi}_2}$.
+
+<br>
+
+## 6. Periviable infants (12 points total)
+
+Recall the data on outcomes of periviable infants. Of 1348 infants in the study born at these gestational ages in 2008-2011, 861 died, 211 survived with neurodevelopmental impairment, and 276 survived without neurodevelopmental impairment. In 2000-2003, of 1391 infants born at these gestational ages, 217 survived with no impairment, 207 survived with impairment, and 967 died. In 2004-2007, of 1535 total infants, 250 survived without impairment, 209 survived with impairment, and 1076 died.
+
+
+
+```{r , echo=FALSE, fig.align='center'}
+
+library(ggplot2)
+Neonate <- read.table(
+  header=TRUE, text='Years       Outcome Count
+1   2000-2003       SurvNoImp      217
+2   2000-2003      SurvImp      207
+3  2000-2003 Died      967
+4   2004-2007 SurvNoImp      250
+5   2004-2007     SurvImp       209
+6  2004-2007     Died       1076
+7   2008-2011      SurvNoImp      276
+8  2008-2011       SurvImp     211
+9  2008-2011    Died   861 ')
+
+ggplot(Neonate, aes(factor(Outcome), Count, fill = Years)) + 
+  geom_bar(stat="identity", position = "dodge") + 
+  scale_fill_brewer(palette = "Set1")
+
+```
+
+### 6.a. Nominal variables (6 points)
+Provide a formal test of the hypothesis that time period is not associated with outcome. Interpret results of your test in clear language that could be used in a scientific publication. If there is a change over time, clearly describe the nature of that change.
+
+----
+
+We first create a 2-way contingency table for data.
+```{r}
+neonate.table <- xtabs(Count ~ Years + Outcome, data = Neonate)
+print(neonate.table)
+```
+
+We apply Pearson and likelihood ratio $\chi^2$ tests to examine whether time period and outcome are independent.
+
+```{r}
+chisq.test(neonate.table)
+```
+
+```{r}
+expected.table <- apply(neonate.table, 1, sum) %*% t(apply(neonate.table, 2, sum)) / sum(neonate.table)
+G.sq <- 2 * sum(neonate.table * log(neonate.table / expected.table))
+1 - pchisq(G.sq, 4)
+```
+
+Therefore, we reject the null hypothesis under level $\alpha=0.05$. The data provides evidence that time period is associated with outcome. However, we cannot tell how outcome is associated with time period from the test itself. According to the histogram, the number of surviving with impairment and surviving without impairment is increasing with respect to time periods. However, the counts of death do not have a clear trend. We extract a $2\times 2$ table from the original table 
+
+```{r,echo=F,results='asis'}
+library(knitr)
+library(kableExtra)
+mt = matrix(c("Year","Year","00-03","08-11",967,861,217,276),ncol=4)
+colnames(mt) = c("","",'Died','SurvNoImp')
+kable(mt, "html", align = "c") %>%
+  kable_styling(full_width = F) %>%
+  column_spec(column=1, bold = T) %>%
+  column_spec(column=2, bold = T) %>%
+    collapse_rows(columns = 1) %>%
+  add_header_above(c( " ", " ", "Outcome" = 2))
+```
+The odds ratio is given by
+\begin{align*}
+\hat{\theta}_{13}&=\frac{n_{11}n_{33}}{n_{13}n_{31}}=\frac{967\times276}{217\times861}=1.43\\
+\hat{\sigma}(\log \hat{\theta}_{13})&=\sqrt{\frac{1}{n_{11}}+\frac{1}{n_{13}}+\frac{1}{n_{31}}+\frac{1}{n_{33}}}=0.10
+\end{align*}
+A 95\% confidence interval of $\hat{\theta}_{13}$ is $(1.17,1.74)$. Both the point estimate and confidence interval of the odds ratio provide evidence that the odds ratio is not equal to 1 and hence the observed data conflicts with independence.
+```{r,echo=F}
+x <- matrix(c(967,861,217,276),ncol=2)
+or <- x[1,1]*x[2,2]/x[1,2]/x[2,1]
+ci <- exp(log(or)+qnorm(0.975)*sqrt(sum(1/x))*c(-1,1))
+```
+
+### 6.b. Ordinal variables (6 points)
+Now assume that the outcomes are ordered so that death is the worst outcome and survival without impairment is the best outcome. Conduct a linear trend test using scores (1,2,3) for time (1=2000-2003) and outcome (3=dead, 2=impaired, 1=survived and not impaired) and interpret the results. Do the results change if we use the outcome weights 100=dead, 10=impaired, 1=survived not impaired?  If so, explain how and why the results differ. Comment on the appropriateness of the scores for both variables.
+
+----
+
+
+```{r}
+neonate <- Neonate
+levels(neonate$Years) <- c(1,2,3)
+levels(neonate$Outcome) <- c(3,2,1)
+res <- neonate[,1:2][rep(1:nrow(neonate), neonate$Count),]
+M.sq  <- (cor(as.numeric(as.character(res$Years)), as.numeric(as.character(res$Outcome)) )^2 ) * (nrow(res)-1)
+1-pchisq(M.sq,1)
+```
+
+Therefore, we reject the null hypothesis under level $\alpha=0.05$ and conclude that the linear component of the association is evident in data. 
+
+
+```{r}
+levels(neonate$Outcome) <- c(100,10,1)
+res <- neonate[,1:2][rep(1:nrow(neonate), neonate$Count),]
+M.sq  <- (cor(as.numeric(as.character(res$Years)), as.numeric(as.character(res$Outcome)) )^2 ) * (nrow(res)-1)
+1-pchisq(M.sq,1)
+```
+
+After adopting the new scores for outcome, the $p$-value becomes larger but still very small and we reject the null under level $\alpha=0.05$. According to the histogram, the data presents an obvious nonlinear trend in "died" category. We increase the score of "died" category leading to a smaller correlation. 
+
+The choice of scores depends on the context. In some situations, these three outcomes or time periods may be considered to have equal distances and then our first choice of scores appears to be more appropriate. However, in some medical experiments, death may be considered much more serious than other two outcomes. Hence assigning a high score to death is more sensible. Therefore, the choice of scores can only be justified under specific context. All conclusions based on the analysis are valid under the specific choice of scores and may change if adopting other scores. When the trend is significant, it may be relatively robust to the choice of scores. 
+
+## 7. Oral contraceptives and thromboembolism (8 points)
+
+We consider a retrospective matched pair case-control study of thromboembolism (formation of a blood clot that breaks loose and is carried by the bloodstream to plug another vessel) and oral contraceptive use. The cases were 175 women of reproductive age, discharged alive from 43 hospitals in 5 cities after experiencing idiopathic thrombophlebitis, pulmonary embolism, or cerebral thrombosis or embolism. Controls were females matched with their cases for hospital, residence, time of hospitalization, race, age, marital status, parity, and insurance pay status. The question of interest is whether cases are more likely than controls to use oral contraceptives.
+
+Of the 175 matched pairs, in 10 pairs both cases and controls used oral contraceptives (OC's), in 95 pairs neither used OC's, in 13 pairs only the control used OC's, and in 57 pairs only the case used OC's.
+
+Using the appropriate test, evaluate the null hypothesis that the proportion of cases exposed to OC's is the same as the proportion of controls who are exposed, and provide the p-value for this test. Calculate the OR and exact 95% CI comparing the odds of thromboembolism in OC users to those in non-OC users. Interpret your results.
+
+----
+
+```{r echo=F, results='asis'}
+mt = matrix(c("control","control","OC","non_OC",10,57,13,95),ncol=4)
+colnames(mt) = c("","",'OC','non_OC')
+kable(mt, "html", align = "c") %>%
+  kable_styling(full_width = F) %>%
+  column_spec(column=1, bold = T) %>%
+  column_spec(column=2, bold = T) %>%
+    collapse_rows(columns = 1) %>%
+  add_header_above(c( " ", " ", "case" = 2))
+```
+
+Based on the table, let $\pi_{1+}$ and $\pi_{+1}$ denote the proportions of controls and cases exposed to OC's respectively. Then the null hypothesis is $H_0: \pi_{1+}=\pi_{+1}$ and McNemar test is used. 
+```{r}
+mcnemar.test(matrix(c(10,57,13,95),ncol=2), correct = F)
+```
+We may calculate OR and its exact 95\% CI by inverting the exact McNemar test.
+
+```{r,message=F}
+library(exact2x2)
+mcnemar.exact(matrix(c(10,13,57,95),ncol=2))
+```
+
+$p$-value is very small and hence we reject the null hypothesis under level $\alpha=0.05$. The odds ratio is 4.38 here implying that the odds of thromboembolism in OC users is 4.38 times that in non-OC users. An exact 95\% CI for the odds ratio is $(2.3714,8.7313)$.
+
+<br>
+
+## 8. Passive smoking and cancer risk (15 points)
+
+A landmark study examined the association between passive smoking and cancer in a group of 509 individuals with cancer and 489 cancer-free (unmatched) controls. Researchers defined passive smoking as exposure to the cigarette smoke of a partner who smoked at least one cigarette per day for at least 6 months. One potential confounding variable is smoking by the participants (i.e., personal smoking) because personal smoking is related to both cancer risk and partner smoking. Therefore, it is important to consider personal smoking when examining the relationship between passive smoking and cancer risk.
+
+Among cases, 120 were exposed to passive smoke but did not smoke themselves; 161 were smokers also exposed to passive smoke; 111 had no exposure from passive or active smoking; and 117 were active smokers who were not exposed to passive smoke. Among controls, 80 were exposed to passive smoke but did not smoke themselves; 130 were smokers also exposed to passive smoke; 155 had no exposure from passive or active smoking; and 124 were active smokers who were not exposed to passive smoke.
+
+***(a)** Calculate the conditional odds ratios comparing the odds of being a case by passive smoking exposure status, conditional on active smoking status (active smoker or nonsmoker).  
+
+----
+
+We summarize the data into the following $2\times2\times2$ table.
+
+```{r echo=F}
+ctable <- matrix(c(161,130,117,124,120,80,111,155),ncol=4)
+colnames(ctable) <- c('Passive','NotPass','Passive','NotPass')
+rownames(ctable) <- c('Case','Control')
+kable(ctable) %>%
+  kable_styling(bootstrap_options="striped",full_width=F) %>%
+  add_header_above(c(" "=1,"active smoker"=2,"not active"=2))
+```
+
+
+
+```{r}
+ctable <- array(c(161, 130, 117, 124, 120, 80, 111, 155), dim = c(2, 2, 2))
+apply(ctable, 3, function(x) {x[1, 1] * x[2, 2] / x[1, 2] / x[2, 1]})
+```
+
+**(b)** Evaluate whether case status and passive smoking are conditionally independent given active smoking status. 
+
+----
+
+Cochran-Mantel-Haenszel test is used for testing conditional independence.
+
+```{r}
+mantelhaen.test(ctable, correct = F)
+```
+Therefore we reject the null hypothesis under level $\alpha=0.05$ indicating the data provides strong evidence that case status and passive smoking are not conditionally independent given active smoking status.
+
+
+**(c)** Is the association between passive smoking and case status homogeneous across categories of active smoking status?  Provide statistical evidence to support your answers.
+
+----
+
+Breslow-Day test is used for testing homogeneous association.
+
+
+```{r}
+library(DescTools)
+BreslowDayTest(ctable, correct = T)
+```
+
+Since $p$-value is relatively large, we cannot reject the null under level $\alpha=0.05$. There is no significant evidence that the association between passive smoking and case status is not homogeneous across categories of active smoking status.
+
+<br>
+
+
+##9. Exercise without pain! (15 points)
+
+An athletics company produces a new model of running shoe that includes a harder material in the insert to correct for overpronation. The company is worried that the material will cause heel tenderness due to some loss of cushioning with the strike of each step. The company enrolled 87 runners and asked them about occasional heel tenderness at study entry and then again after using the new shoe for one month. The company would like to know whether the proportion of runners with occasional heel tenderness is the same before the study and after using the study shoe for one month. 
+
+Analyze the data and produce a professional report (as part of this document) providing statistical evidence that addresses the question of interest to the company. Data are in the file dontbeaheel.xlsx. 
+
+----
+
+The company collected the data based on the feedbacks from runners. We first summarize the data using the following $2\times2$ table. The company is interested in whether the proportion of runners with occasional heel tenderness is the same before and after the study. To respond to this question, we appeal to formal hypothesis testings. Since the records for each runner are dependent, the data is of the form of matched pairs. Therefore, we adopt McNemar test for this problem. The null hypothesis is the proportions of runners with occasional heel tenderness before study and after study are same. The alternative hypothesis is that the two proportions are different.
+
+
+```{r}
+library(readxl)
+shoe <- as.data.frame(read_xlsx('dontbeaheel.xlsx'))
+shoe.reshape <- reshape(shoe, direction = 'wide', idvar = "ID", timevar = "Occasion")
+shoe.table <- xtabs( ~ Pain.Before + Pain.After, shoe.reshape)
+shoe.table
+```
+
+```{r}
+mcnemar.exact(shoe.table)
+```
+The $p$-value is 0.04139 and is smaller than the significance level $\alpha=0.05$. We reject the null hypothesis and conclude that the data exhibits evidence that the proportion of occasional tenderness before and after the study are different. A point estimation of the odds ratio is 3 indicating the odds of the runners experiencing heel tenderness after the study is 3 times of that before the study. The following graph shows that more runners experience heel tenderness after the study than before the study.
+
+```{r, echo=F, fig.align='center', fig.width=7.1}
+shoe$Occasion <- factor(shoe$Occasion, levels=unique(shoe$Occasion))
+ggplot(shoe, aes(Occasion, fill=Pain)) + geom_bar()
+```
+
+
+According to the $p$-value of McNemar test and the estimate of the odds ratio, the data suggests that the new shoe may actually cause heel tenderness to more runners. 
+
+
+
+<br>
