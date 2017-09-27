@@ -1,5 +1,6 @@
 ---
-title: "Homework 2, Due September 27 at 11:45am"
+title: "Homework 2"
+author: Zach White
 output:
   pdf_document: default
   html_document: default
@@ -8,6 +9,12 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
+library(R2jags)
+library(lme4)
+library(R2WinBUGS)
+library(ggplot2)
+library(gridExtra)
+library(hglm)
 ```
 
 ## Provide clearly documented code in an R markdown document where appropriate. Whenever possible, provide statistical evidence to support your answers.
@@ -60,20 +67,24 @@ int.group.like = nloglike(Y.group,group.x,coef(group.int.only)[1],0)
 likelihood.mat = matrix(c(x.un.like,x.group.like,int.un.like,int.group.like),byrow = TRUE,nrow = 2)
 colnames(likelihood.mat) = c("Ungrouped","Grouped")
 rownames(likelihood.mat) = c("Full","Intercept")
-kable(likelihood.mat)
+likelihood.mat
 ```
-I created my own function to calculate the log likelihod, and there is no difference between the likelihoods.  This can easily be shown using the actual likelihoods with the data we are given.  
+I created my own function to calculate the log likelihod, and there is no difference between the likelihoods.  This can easily be shown using the actual likelihoods of a binomial and bernoulli with the data we are given
 
 ###1b.
 Show that the deviances for $M_0$ and $M_1$ differ for the two data formats. Why is this?  (Hint: Consider the number of parameters in the saturated model for each case.)
-
 
 #### Solution
 ```{r}
 int.x$deviance; int.only$deviance
 group.x.mod$deviance; group.int.only$deviance
 
+
+deviance.mat = matrix(c(int.x$deviance, int.only$deviance,
+group.x.mod$deviance, group.int.only$deviance), byrow = FALSE, nrow = 2,dimnames = list(c("Full","Int"),c("ungrouped","grouped")))
+deviance.mat
 ```
+The deviances will be different because under the grouped data, we only have 3 observations and thus 3 parameters under the , while under the ungrouped data, we have 12 observations and thus 12 parameters.  Thus the deviance will clearly be different because under the grouped data, our models have 1-2 parameters compared to a maximum of 3, and the ungrouped data have 1-2 parameters compared to a maximum of 12.
 
 ###1c.
 Show that the difference between the deviances for $M_0$ and $M_1$ is the same regardless of data format. Why is this?  This result implies that for testing for the effect of $x$, the data format does not matter, though it does matter for testing goodness of fit versus the saturated model.
@@ -82,9 +93,10 @@ Show that the difference between the deviances for $M_0$ and $M_1$ is the same r
 ```{r}
 anova.ungroup = anova(int.only,int.x,test = "Chisq")
 anova.grouped = anova(group.int.only,group.x.mod,test = "Chisq")
-anova.ungroup$Deviance
-anova.grouped$Deviance
+anova.ungroup$Deviance[2]
+anova.grouped$Deviance[2]
 ```
+We can see that the differences in the deviances between the two models within the same grouping status is the same across groups.  
 
 ##2. Cellular differentiation (20 points)
 Using the cellular differentiation data from class, fit a Poisson regression model with IFN as a nominal categorical variable and interaction terms between IFN and TNF (a saturated model).  Assess whether the interaction terms provide significant improvement to the model and diagnose any problems encountered in estimation. Using the main effects model, evaluate whether IFN is best treated as a nominal categorical variable or by fitting a linear trend in IFN dose.
@@ -107,14 +119,13 @@ m.cont = glm(celldiff~TNF + IFN, family = poisson(link=log))
 summary(m.cont)
 
 anova(m.cat,m.cont,test = "Chisq")
+anova(m.cat.full,m.cat)
 ```
-I treat the other variable TNF as continuous or this problem.  When comparing the categorical to continuous, the only significant category of IFN is 100 U/ml, which is a lot.  However, when we treat IFN as continuous, the coefficient is significant according to a Wald test.  When I think about reconciling these two ideas, it could be that we really start to see the effects of IFN as the dosage gets to be pretty high. In neither of the models are the interactions significant. 
+I treat the other variable TNF as continuous or this problem.  When comparing the categorical to continuous, the only significant category of IFN is 100 U/ml.  However, when we treat IFN as continuous, the coefficient is significant according to a Wald test.  When I think about reconciling these two ideas, it could be that we really start to see the effects of IFN as the dosage gets to be pretty high. In neither of the models are the interactions significant
 
-Interaction
+Interactions do decrease the deviance, but that is mostly because it uses up all of the degres of freedom. It doesn't seem that adding these interactions add to the model.  Normally, this might be a problem, but since we are dealing with grouped poisson count data, it's not a huge deal.  This is for two reasons: the degrees of freedom for grouped data is different than ungrouped data and under the poisson framework, the variance and the mean are the same.  And so similarly in the way that we cannot estimate variance of a normal distribution with only one data point, we can estimate variance of a poisson if we know the mean because these are shared.
 
-Base model. Continuous is better.
-
-Zero degrees of freedom.  Somethings got to be wrong.  These are counts. with the 
+When we are analyzing the basic model, it seems as though categorical representation of IFN is better.  The difference in deviance between these two models is 9.82, which is significant under a $\chi^2$ test with 2 degrees of freedom.
 
 ##3. Negative binomial distribution (20 points)
 ###3a. Negative binomial as Poisson-Gamma mixture
@@ -171,13 +182,139 @@ procedure, and variables available in the dataset include hospital name, procedu
 ###4a. Model fitting and interpretation
 Treating each row of the excel spreadsheet as an observation from a binomial distribution with number of failures equal to the number of deaths and number of trials equal to the number of cases/procedures, fit a GLM exploring the contributions of the hospital, region, procedure, and case mix to the mortality rate. Use analysis of deviance to select the most appropriate model for the data, specify your preferred model clearly in equation form, and provide clear interpretations of all parameter estimates.
 
-```{r}
+#### Solution
+
+```{r, cache = TRUE}
 cardiac = read.csv("C:/Users/Zachary/Desktop/Fall_2017_Projects/STA_841/STA_841_cat/HW02/cardiacsurgery.csv",header = TRUE)
+cardiac$success = cardiac$Ncases - cardiac$Ndeaths
+#cardiac.glm = glm(cbind(success,Ndeaths)~ Hospital+Region+Procedure+ExpectedMortalityRate, data = cardiac, family = binomial())
+#summary(cardiac.glm)
+
+# Interactions
+base.glm = glm(cbind(success,Ndeaths)~ Hospital+Region+Procedure+ExpectedMortalityRate, data = cardiac, family = binomial())
+proc.emr.int = glm(cbind(success,Ndeaths)~ Hospital+Region+Procedure+ExpectedMortalityRate + Procedure:ExpectedMortalityRate, data = cardiac, family = binomial())
+reg.proc.int = glm(cbind(success,Ndeaths)~Hospital+Region+Procedure+ExpectedMortalityRate + Hospital:Procedure, data = cardiac, family = binomial())
+anova(base.glm,proc.emr.int, test = "Chisq")
+anova(base.glm,reg.proc.int,test = "Chisq")
+
+# lmer models
+hosp.hier.glm = glmer(cbind(success,Ndeaths) ~ Region+Procedure+ExpectedMortalityRate + (1|Hospital), data = cardiac, family = binomial(link = logit),nAGQ = 9)
+reg.hier.glm = glmer(cbind(success,Ndeaths) ~ Hospital + (1|Region) + Procedure + ExpectedMortalityRate,
+  data = cardiac, family = binomial(link=logit))
+
+anova(hosp.hier.glm,reg.hier.glm,test = "Chisq")
 
 ```
+I begin by fitting basic generalize linear models for this binomial data of cardiac surgery success rates.  We are interested in the effects of hospital, region, procedure, and epected mortality rate on the success probability of cardiac surgery.  After doing this, I test out to see if any reasonable interactions represent significant improvements in the model.  However, the interactions don't seem to offer significant improvements.
+
+Something of note though that I can tell is that, it makes sense that since we are interested in ranking hospitals, it makes sense to build a hierarchical model around hospital or possible region.  And thus, under this paradigm, I build two hierarchical generalized linear models with random effects on either hospital.  Now these aren't immediately comparable to the basic glm's I use previously.  However, we can compare them to each other, and in so doing, it seems clear that hospital is more appropriate hierarchy in terms of deviance and also in terms of our model goals.
+
+Knowing that hierarchical models make intuitive sense for our problem, I choose to use a hierarchical Bayesian model with random effects for hospital.  The following formula shows this model:
+
+\begin{align*}
+y_i | p_i \sim \text{Bin}(n_i,p_i)\\
+log(\frac{p_i}{1 - p_i}) = \gamma +\alpha_{ji} + \beta_{\text{r}}*\text{r}_i + \beta_{\text{p}} * \text{p}_i + \beta_{\text{emr} }*\text{emr}_i\\
+\text{where } \beta_{\text{r}},\ \beta_{\text{p}},\ \text{and}\ \beta_{\text{emr} } \text{ all have diffuse priors.}\\
+j = 1\ldots 40 \text{ levels of the hospitals} \\
+i = 1\ldots n  \text{ total number of observations}
+\end{align*}
+
+The interpretation of these paramaters are as follows:
+
+$e^{\gamma}$ represents the global average odds of success give procedure is CABG and region is Brox
+
+$e^{\alpha_j}$ represents the multiplicative change of odds of changing hospitals in the region bronx and CABG operation.  These repesent the random effects by hospital.
+
+$e^{\beta_{r}}$ represents the multiplicative change of odds of changing regions relative to the region of Bronx.
+
+$e^{\beta_{p}}$ represents the multiplcative change of odds of switching from a CABG to a "Valve or Valve/CABG"
+
+$e^{\beta_{emr}}$ represents the multiplicative change of odds of a 1 increase of Expected Mortality Rate while holding all other factors constant. 
+
 
 ###4b. Hospital rankings
 If you are tasked with recognizing "high-achieving" and "low-achieving" hospitals for CMS, which hospitals would you select, and why? Provide a detailed statistical justification for your choice.
+
+#### Solution
+```{r, cache = TRUE}
+jags.model = function(){
+  for(n in 1:N){
+    logit(p[n]) <- alpha[hospital[n]] + beta.r * region[n] + beta.p * procedure[n] + beta.emr * emr[n]
+    Y[n] ~ dbin(p[n],success[n] + ndeaths[n])
+  }
+  alpha[1] <- 0
+  for(h in 2:H){
+    alpha[h] ~ dnorm(alpha.mu,alpha.phi)
+  }
+  
+  beta.r ~ dnorm(0,.00001)
+  beta.p ~ dnorm(0,.00001)
+  beta.emr ~ dnorm(0,.00001)
+  
+  alpha.mu ~ dnorm(0,.00001)
+  alpha.phi <- pow(alpha.sigma,-2)
+  alpha.sigma ~ dunif(0,100)
+}
+
+success = cardiac$success
+ndeaths = cardiac$Ndeaths
+hospital = cardiac$Hospital
+procedure = cardiac$Procedure
+emr = cardiac$ExpectedMortalityRate
+region = cardiac$Region
+
+data.list = list(success = success, 
+            ndeaths = ndeaths,
+            Y = success,
+            hospital = hospital,
+            procedure = procedure,
+            emr = emr,
+            region = region,
+            H = length(unique(hospital)),
+            N = length(success)
+            )
+
+params = c("alpha", "beta.r", "beta.p","beta.emr","alpha.mu","alpha.sigma")
+
+sims = jags(data.list,inits = NULL, parameters.to.save = params,model = jags.model,n.chains = 2,n.iter = 10000,n.burnin = 1000)
+
+samples = sims$BUGSoutput$sims.matrix
+
+alpha.samps = samples[,1:40]
+med = quantile(alpha.samps,.5)
+upper = which(colMeans(alpha.samps) > med)
+lower = which(colMeans(alpha.samps) <= med)
+med.alpha.samps = quantile(colMeans(alpha.samps),.5)
+exp.alpha = exp(alpha.samps)
+perc.alpha = exp(alpha.samps) / (1+exp(alpha.samps))
+colMeans(alpha.samps)
+
+data.frame.samp = as.data.frame(samples)
+par(mfrow = c(3,1))
+t1 = ggplot(data.frame.samp,aes(y = beta.emr, x = 1:length(beta.emr))) + geom_path()
+t2 = ggplot(data.frame.samp,aes(y = beta.p, x = 1:length(beta.p))) + geom_path()
+t3 = ggplot(data.frame.samp,aes(y = beta.r, x = 1:length(beta.r))) + geom_path()
+grid.arrange( t1,t2,t3, ncol=1)
+```
+
+According to this model, if we want to classify high-achieving and low-achieving hopsitals, we basically just need to focus on the random effects model.  The way I choose to do this is by finding the posterior median across all of the random effects, and then I see which hospitals have their entire 95% credible interval above it that posterior median.
+
+```{r}
+cred.int = apply(alpha.samps,2,quantile,c(.025,.975))
+lgl.credible = cred.int > med
+which(apply(lgl.credible,2,sum) == 2)
+```
+
+Doing it this way, the following hospitals that are "high-achieving" are the following: 1, 6, 7, 12, 13, 16, 17, 21, 27, 29, 31, 34, 35, and 37.
+
+```{r}
+levels(cardiac$Hospital)[which(apply(lgl.credible,2,sum) == 2)]
+```
+These hospitals can be considered high achieving.  The other hospitals can be considered low achieving.
+
+```{r}
+levels(cardiac$Hospital)[which(apply(lgl.credible,2,sum) != 2)]
+```
 
 
 

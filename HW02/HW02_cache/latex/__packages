@@ -1,0 +1,14 @@
+base
+knitr
+coda
+rjags
+R2jags
+Matrix
+lme4
+boot
+R2WinBUGS
+MASS
+hglm.data
+hglm
+ggplot2
+gridExtra
