@@ -1,0 +1,52 @@
+first = f1[["MRData"]]
+names(first)
+length.vec = rep(0,length(first))
+
+for(i in 1:length(first)){
+  length.vec[i] = length(first[[i]])
+}
+
+map(first[["RaceTable"]],"position")
+length(first[["RaceTable"]])
+names(first[["RaceTable"]])
+length(first[["RaceTable"]][["Races"]])
+# So structure. 
+# First level: MRData.
+# Second Level: "xmlns"     "series"    "url"       "limit"     "offset"    "total" "RaceTable"
+# None of those have hierarchy except the RaceTable
+# Third level: Racetable: "season" "Races" ############# season is one values 
+# Fourth level: There are 19 levels of races.  Each one represents a different race.
+# Fifth level: "season"   "round"    "url"      "raceName" "Circuit"  "date"     "time" "Results"
+## Circuit has 4 different lists
+## Results is another list of 18-20 lists.  18 for the first 1, 20 for all of the others
+# Sixth level of Results: "number" "position" "positionText" "points" "Driver" "Constructor"  "grid"  "laps" "status" "Time"  "FastestLap"
+## This level is where a lot of the really relevant information comes in.
+## Driver is a list
+## Contructor is a list
+## Time is a list
+## FastestLap is a list
+
+map(first[["RaceTable"]][["Races"]])
+str(first[["RaceTable"]][["Races"]])
+races.length = rep(0,19)
+races.names = rep(0,19)
+for(i in 1:length(first[["RaceTable"]][["Races"]])){
+  races.length[i] = length(first[["RaceTable"]][["Races"]][[i]])
+}
+for(i in 1:19){
+  cat(length(first[["RaceTable"]][["Races"]][[i]][[8]])," ")
+  racenames = first[["RaceTable"]]
+}
+
+names(first[["RaceTable"]][["Races"]][[1]])
+first[["RaceTable"]][["Races"]][[1]][["raceName"]] # How to get the racename
+names(first[["RaceTable"]][["Races"]][[1]][["Results"]])
+names(first[["RaceTable"]][["Races"]][[1]][["Results"]][[1]])
+names(first[["RaceTable"]][["Races"]][[1]][["Results"]][[1]][["Driver"]])
+first[["RaceTable"]][["Races"]][[1]][["Results"]][[1]][["Driver"]][["givenName"]]
+first[["RaceTable"]][["Races"]][[1]][["Results"]][[1]][["Driver"]][["familyName"]]
+first[["RaceTable"]][["Races"]][[1]][["Results"]][[1]][["position"]]
+first[["RaceTable"]][["Races"]][[1]][["Results"]][[1]][["points"]]
+# We know there are 19 races.  We can loop through them to get the results we need.
+
+# So som

@@ -1,0 +1,336 @@
+---
+title: "Case Study"
+author: "Zach White"
+date: "October 10, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(effects)
+library(pROC)
+library(caret)
+library(car)
+library(gridExtra)
+library(kableExtra)
+library(knitr)
+library(stringr)
+```
+
+
+```{r, echo = FALSE, cache = TRUE, results="hide"}
+load("cs1.Rdata")
+#names(cath2)
+
+all.fac.cath = num.age.cath = cath2  
+age.mid.vec = c(21,27,32,37,42,47,52,57,62,67,72,77,85)
+for(i in 1:13){
+  num.age.cath$cath1.AGE_G[num.age.cath$cath1.AGE_G == i]  = age.mid.vec[i] 
+}
+for(i in 1:(dim(all.fac.cath)[2])){
+  if(is.integer(all.fac.cath[,i]) == TRUE)
+    {
+    all.fac.cath[,i] = as.factor(all.fac.cath[,i])
+    num.age.cath[,i] = as.factor(num.age.cath[,i])
+    }
+}
+num.age.cath$cath1.AGE_G = as.numeric(levels(num.age.cath$cath1.AGE_G))[num.age.cath$cath1.AGE_G]
+num.age.cath$cath1.NUMDZV = as.numeric(levels(num.age.cath$cath1.NUMDZV))[num.age.cath$cath1.NUMDZV]
+num.age.cath = num.age.cath[complete.cases(num.age.cath),]
+all.fac.cath = all.fac.cath[complete.cases(all.fac.cath),]
+
+names(all.fac.cath)
+
+```
+
+```{r, echo = FALSE, cache = TRUE, results="hide"}
+#########################################################
+# Missingness
+missingness= is.na(cath2)
+sum(missingness)
+apply(missingness,2,sum)
+mean(missingness)
+
+# Exploratory
+log.p = rep(0,13)
+for(i in 1:13){
+  p.hat = mean(num.age.cath$cath1.MI[num.age.cath$cath1.AGE_G == age.mid.vec[i]])
+  log.p[i] = log(p.hat / (1 - p.hat))
+}
+eda.log.p = data.frame(age = age.mid.vec, log.odds = log.p)
+
+age.plot = ggplot(eda.log.p,aes(x = age,y = log.odds)) + 
+  geom_point()+ 
+  labs(title= "log(odds) by Age",
+       x = "Age",
+       y = "log(odds)")+
+  theme_bw()
+#age.plot.without.kids = ggplot(eda.log.p[-1,], aes(x = age,y = log.odds)) + geom_point()
+# Extremely small number of individuals.
+# Looks linear except the first term. Should be polynomial? How do we reconcile this age.
+# Make child it's own thing? I think that is actually smart
+# 11 kids this way.  Clearly something going on with this.
+
+mean(num.age.cath$cath1.AGE_G == age.mid.vec[1])
+
+# OTher numerics
+# cath1.LVEF_R
+summary(num.age.cath$cath1.LVEF_R)
+## Moving window of 20?
+low.window = seq(2,75, by = 1)
+high.window = seq(22,95, by = 1)
+
+
+log.odds.lvef = rep(0,length(low.window))
+for(i in seq_along(low.window)){
+  p.hat = mean(num.age.cath$cath1.MI[num.age.cath$cath1.LVEF_R > low.window[i] & num.age.cath$cath1.LVEF_R < high.window[i]])
+  log.odds.lvef[i] = log(p.hat / (1-p.hat))
+  
+}
+med.window = seq(12,85, by= 1)
+lvef.eda.data = data.frame(med.window, log.odds.lvef)
+lvef.eda.plot = ggplot(lvef.eda.data, aes(x = med.window, y = log.odds.lvef)) + 
+  geom_point() + 
+  labs(title = "log(odds) by LVEF_R",
+       x = "LVEF_R",
+       y = NULL)+
+  theme_bw()
+# Clearly quadratic.  We should include a quadratic term in this.
+
+
+
+
+#cath1.NUMDZV
+log.odds.num1 =log( mean(num.age.cath$cath1.MI[num.age.cath$cath1.NUMDZV == 1]) / (1 -   mean(num.age.cath$cath1.MI[num.age.cath$cath1.NUMDZV == 1])))
+log.odds.num2 = log( mean(num.age.cath$cath1.MI[num.age.cath$cath1.NUMDZV == 2]) / (1 -   mean(num.age.cath$cath1.MI[num.age.cath$cath1.NUMDZV == 2])))
+log.odds.num3 = log( mean(num.age.cath$cath1.MI[num.age.cath$cath1.NUMDZV == 3]) / (1 -   mean(num.age.cath$cath1.MI[num.age.cath$cath1.NUMDZV == 3])))
+numdzv = data.frame(x1 = c(1,2,3),log.odds = c(log.odds.num1,log.odds.num2,log.odds.num3))
+numdzv.plot = ggplot(numdzv, aes(x = x1, y = log.odds)) + 
+  geom_point() +
+  labs(title = "log(odds) by numdzv",
+       y = NULL) +
+  theme_bw()
+# Keep as categorical.
+#########################################################
+
+
+```
+
+```{r, echo = F, cache = TRUE, results="hide"}
+# Models
+
+# Possibilities to explore.
+## Interactions
+## Turn age into numeric variable.
+
+# Bernoulli
+# Treat age as categorical
+full.fac.mod = glm(factor(cath1.MI) ~ . , family = binomial(link = "logit"), data = all.fac.cath)
+summary(full.fac.mod)
+# Treat age as continuous
+full.age.num.mod = glm(factor(cath1.MI) ~ ., family = binomial(link = "logit"), data = num.age.cath)
+summary(full.age.num.mod)
+anova(full.fac.mod,full.age.num.mod,test = "Chisq")
+# Treat age as continuou with polynomial term
+full.age.num.poly.mod = glm(factor(cath1.MI) ~ poly(cath1.AGE_G,2) -cath1.AGE_G + ., data = num.age.cath, family = binomial(link = "logit"))
+
+
+#summary(full.age.num.poly.mod)
+anova(full.age.num.mod,full.age.num.poly.mod, test = "Chisq")
+anova(full.fac.mod,full.age.num.poly.mod, test = "Chisq")
+# Test out the interactions.  Interactions with this many age variables
+# Meaningful Interactions: cath1.RACE_G:cath1.HXSMOKE, cath1.AGE_G:cath1.RACE_G,
+# cath1.AGE_G:cath1.HXSMOKE, cath1.HXSMOKE:cath1.CHFSEV,
+
+# Interaction models
+full.age.num.int.mod = glm(factor(cath1.MI) ~ . + .:., data = num.age.cath, family = binomial(link = "logit"))
+summary(full.age.num.int.mod)
+
+## Significant Interaction Models
+comp.mod = glm(factor(cath1.MI) ~ . + cath1.AGE_G:cath1.HXSMOKE + cath1.RACE_G:cath1.HXSMOKE +
+                            cath1.RACE_G:cath1.HXCHF + cath1.HXSMOKE:cath1.LVEF_R + cath1.CHFSEV:cath1.HXMI +
+                            cath1.HXANGINA:cath1.HXMI + cath1.HXANGINA:cath1.NUMDZV + cath1.HXCHF:cath1.HXMI +
+                            cath1.HXDIAB:cath1.NUMDZV + cath1.HXMI:cath1.LVEF_R + cath1.HXMI:cath1.NUMDZV +
+                            cath1.LVEF_R:cath1.NUMDZV,
+                          data = num.age.cath, family = binomial(link = "logit"))
+
+###### I think this is the model!
+num.age.cath$cath1.NUMDZV = as.factor(num.age.cath$cath1.NUMDZV)
+sig.age.num.int.mod = glm(factor(cath1.MI) ~ . -cath1.AGE_G -cath1.LVEF_R +  poly(cath1.AGE_G,2) + poly(cath1.LVEF_R,2) + poly(cath1.AGE_G,2):cath1.HXSMOKE + cath1.RACE_G:cath1.HXSMOKE +
+                            cath1.RACE_G:cath1.HXCHF + cath1.HXSMOKE:poly(cath1.LVEF_R,2) + cath1.CHFSEV:cath1.HXMI +
+                            cath1.HXANGINA:cath1.HXMI + cath1.HXANGINA:cath1.NUMDZV + cath1.HXCHF:cath1.HXMI +
+                            cath1.HXDIAB:cath1.NUMDZV + cath1.HXMI:poly(cath1.LVEF_R,2) + cath1.HXMI:cath1.NUMDZV +
+                            poly(cath1.LVEF_R,2):cath1.NUMDZV,
+                          data = num.age.cath, family = binomial(link = "logit"))
+probit.mod = glm(factor(cath1.MI) ~ . -cath1.AGE_G -cath1.LVEF_R +  poly(cath1.AGE_G,2) + poly(cath1.LVEF_R,2) + poly(cath1.AGE_G,2):cath1.HXSMOKE + cath1.RACE_G:cath1.HXSMOKE +
+                            cath1.RACE_G:cath1.HXCHF + cath1.HXSMOKE:poly(cath1.LVEF_R,2) + cath1.CHFSEV:cath1.HXMI +
+                            cath1.HXANGINA:cath1.HXMI + cath1.HXANGINA:cath1.NUMDZV + cath1.HXCHF:cath1.HXMI +
+                            cath1.HXDIAB:cath1.NUMDZV + cath1.HXMI:poly(cath1.LVEF_R,2) + cath1.HXMI:cath1.NUMDZV +
+                            poly(cath1.LVEF_R,2):cath1.NUMDZV,
+                          data = num.age.cath, family = binomial(link = "probit"))
+clog.log.mod = glm(factor(cath1.MI) ~ . -cath1.AGE_G -cath1.LVEF_R +  poly(cath1.AGE_G,2) + poly(cath1.LVEF_R,2) + poly(cath1.AGE_G,2):cath1.HXSMOKE + cath1.RACE_G:cath1.HXSMOKE +
+                            cath1.RACE_G:cath1.HXCHF + cath1.HXSMOKE:poly(cath1.LVEF_R,2) + cath1.CHFSEV:cath1.HXMI +
+                            cath1.HXANGINA:cath1.HXMI + cath1.HXANGINA:cath1.NUMDZV + cath1.HXCHF:cath1.HXMI +
+                            cath1.HXDIAB:cath1.NUMDZV + cath1.HXMI:poly(cath1.LVEF_R,2) + cath1.HXMI:cath1.NUMDZV +
+                            poly(cath1.LVEF_R,2):cath1.NUMDZV,
+                          data = num.age.cath, family = binomial(link = "cloglog"))
+
+
+summary(sig.age.num.int.mod)
+anova(full.fac.mod,comp.mod, test = "Chisq")
+anova(comp.mod, sig.age.num.int.mod, test = "Chisq")
+#################### NO LONGER PRODUCES NAs
+
+sig.age.num.int.fac.mod = glm(factor(cath1.MI) ~. - cath1.NUMDZV + factor(cath1.NUMDZV)+ cath1.AGE_G:cath1.HXSMOKE + cath1.RACE_G:cath1.HXSMOKE +
+                            cath1.RACE_G:cath1.HXCHF + cath1.HXSMOKE:cath1.LVEF_R + cath1.CHFSEV:cath1.HXMI +
+                            cath1.HXANGINA:cath1.HXMI + cath1.HXANGINA:cath1.NUMDZV + cath1.HXCHF:cath1.HXMI +
+                            cath1.HXDIAB:cath1.NUMDZV + cath1.HXMI:cath1.LVEF_R + cath1.HXMI:cath1.NUMDZV +
+                            cath1.LVEF_R:cath1.NUMDZV,
+                          data = num.age.cath, family = binomial(link = "logit"))
+anova(sig.age.num.int.mod,sig.age.num.int.fac.mod, test = "Chisq")
+# Doesn't seem to be significant.
+## Lets rolle with sig.age.num.int.mod
+
+```
+
+```{r, echo= FALSE, cache = TRUE, results="hide"}
+# VAlidation
+modcv = train(factor(cath1.MI) ~ poly(cath1.AGE_G,2) - cath1.AGE_G - cath1.LVEF_R + cath1.RACE_G + cath1.HXSMOKE + cath1.CHFSEV + cath1.HXANGINA + 
+                cath1.HXCEREB + cath1.HXCHF + cath1.HXCOPD + cath1.HXDIAB + cath1.HXHTN + cath1.HXHYL + cath1.HXMI + 
+                poly(cath1.LVEF_R,2) + cath1.NUMDZV +  poly(cath1.AGE_G,2):cath1.HXSMOKE + cath1.RACE_G:cath1.HXSMOKE +
+                            cath1.RACE_G:cath1.HXCHF + cath1.HXSMOKE:poly(cath1.LVEF_R,2) + cath1.CHFSEV:cath1.HXMI +
+                            cath1.HXANGINA:cath1.HXMI + cath1.HXANGINA:cath1.NUMDZV + cath1.HXCHF:cath1.HXMI +
+                            cath1.HXDIAB:cath1.NUMDZV + cath1.HXMI:poly(cath1.LVEF_R,2) + cath1.HXMI:cath1.NUMDZV +
+                            poly(cath1.LVEF_R,2):cath1.NUMDZV, 
+              data = num.age.cath, method = "glm", family = "binomial",
+              trControl = trainControl(method = "cv", number = 10, verboseIter = TRUE)
+              )
+modcv
+
+# Look at GAM for age and maybe the other numerical variables?  Would this be appropriate.  This might hurt t
+
+# ROC and AUC
+prob.logit = predict(sig.age.num.int.mod, type = "response")
+prob.probit = predict(probit.mod, type = "response")
+prob.cloglog = predict(clog.log.mod, type = "response")
+
+
+roccurve.logit = roc(num.age.cath$cath1.MI~prob.logit,data = num.age.cath)
+roccurve.probit = roc(num.age.cath$cath1.MI~prob.probit,data = num.age.cath)
+roccurve.cloglog  = roc(num.age.cath$cath1.MI~prob.cloglog,data = num.age.cath)
+coords(roccurve.logit, "best", ret = c("threshold","specificity", "1-npv"))
+auc(roccurve.logit)
+coords(roccurve.probit, "best", ret = c("threshold","specificity", "1-npv"))
+auc(roccurve.probit)
+coords(roccurve.cloglog, "best", ret = c("threshold","specificity", "1-npv"))
+auc(roccurve.cloglog)
+
+# Residuals and stuff
+# dfbetasPlots(sig.age.num.int.mod,id.n = 5) # Produces a ton of plots that I'm not exactly sure how to use in a report like this.
+nullmod = glm(factor(cath1.MI) ~ 1, data = num.age.cath, family = binomial)
+1 - logLik(sig.age.num.int.mod) / logLik(nullmod)
+```
+
+#### Introduction
+
+Using data from the Duke Databank for Cardiovascular Diseases on patients undergoing a cardiac catheterization procedure, we seek to understand which factors are most predictive of a subsequent myocardial infarction (MI).  We use generalized linear models with different link functions to analyze the relationships between explanatory variables and whether the patient experienced a MI.
+
+Specifically, we will perform initial exploratory data analyses to understand the nature of certain variables and to assess the appropriateness of certain link functions.  We decide to use all explanatory variables and some interaction terms, and we then fit our model using three different link functions to compare the estimates and predictive performance.  After comparison, we decide to use the logit link function for our model.  We analyze predictive performance through k-fold cross-validation, and we assess the appropriateness of the model through deviance residuals, pseudo-$R^2$, and Receiver Operating Characteristic (ROC) curves.  
+
+#### Exploratory Analysis
+We first perform some exploratory data analysis.  We are interested in one response variable, specifically, myocardial infarction (MI), which indicates whether the patient has a MI.  This is clearly binary, and thus we want to use some generalized linear model for binary regression.  There are 14 explanatory variables.  Something of note with these data is that there are missing data, especially in the LVEF_R variable, which is continuous.  Out of 11,201 missing values, 9,569 are from the LVEF_R variable.  Although this might not be best in practice, we choose to discard these values because there are still 22,366 observations without missing values.  In practice, we should be hesitant to discard so many observations because we are losing significant information.  We could do multiple imputation and conduct our analysis on each of the imputed datasets, but for this case study, we will simply discard any observation with missing values.
+```{r, echo = FALSE,fig.height=3.5}
+grid.arrange(age.plot,numdzv.plot,lvef.eda.plot, ncol = 3)
+```
+
+Most of the explanatory variables are categorical variables with two levels, but there are two variables that are coded as categorical which could be considered continuous.  The first of which is age (categorized as 1=18-24; 2=25-29; 3=30-34; 4=35-39; 5=40-44; 6=45-49; 7=50-54; 8=55-59; 9=60-64; 10=65-69; 11=70-74; 12=75-79; 13=>=80).  We will test whether to use this as a factor or treat this as a continuous variable.  The following plot shows the observed $\log(\frac{\hat p}{1 - \hat p})$ for the midpoint of the age range of each of the levels.  It looks quite linear, albeit the extremely low value for the first value.  After this first value, it does look linear.  We could treat this as a type of interaction term where we only use the age variable if it is not the youngest age group.  We could also treat this as a polynomial term on age.  The other possible variable that could be treated as a count instead of categorical variable is the number of deceased vessels found in the catheterization.  The middle plot shows the observed log-odds, and it seems it is not necessary to use as a continuous variable, especially since there are only three different values (1,2, and 3).   
+
+The other continuous variable is LVEF_R, which represents the left ventricular ejection fraction (%) as measured during the catheterization.  The plot on the right shows log-odds for binned values of LVEF_R.  We use a moving log-odds for a range of 20% LVEF_R , and this is clearly quadratic.  Thus, when modeling, we should make sure to add a second-order polynomial to this term.  Without this, a simple linear term would not be able to capture trends in this way.
+
+#### Methodology and Model Selection
+We explore three different link functions for this binary regression model: logit, probit, and complementary log log.  These can be described as the following:
+
+\begin{align*}
+\text{Logit:  } &log\big(\frac{\pi_i}{1 - \pi}\big) = \boldsymbol X_i \boldsymbol {\beta} \\
+\text{Probit:  } &Pr(Y_i = 1 | \boldsymbol X_i) = \Phi[(\boldsymbol X_i^T \boldsymbol \beta - \tau)/\sigma] \text{ where we let } \\
+Z_i = \boldsymbol X_i^T \boldsymbol \beta - \epsilon_i \text{ where } \epsilon_i \stackrel{iid}{\sim} N(0,\sigma^2) \\
+\text{so } \begin{split}
+Y_i = \bigg\{ 1 \text{ if } Z_i \ge \tau \\
+ 0 \text{ otherwise}
+\end{split} \\
+\text{Complementary log log: } &\log[-\log(1-\pi(x))] = \boldsymbol X_i \boldsymbol \beta
+\end{align*}
+
+
+The interpretation of the coefficients in a logistic regression model are quite simple.  The $\beta$ coefficients are the odds-ratio between that and the baseline conditioning on the values of other predictors staying fixed.  The interpretation of the coefficients for a probit model is generally associated with changes in E($Y^*$), which is the expectation of the latent variable.  So the $\beta$ represents the increase in the expectation of the latent variable associated with an increase of 1 in the covariate.  The interpretation of the complementary log log model is a little bit more complex.
+
+In choosing our final model, we use analysis of deviance to test which model is better.  We can do this as long as the models are nested.  We first check basic models without interactions.  We find that although it is better to use age as a factor, for the interpretability of coefficients and interactions, we choose to turn it into a continuous random variable by choosing the middle values of the window. We also compare the continuous age with the full model with a second degree polynomial added for age.  This is clearly better than the model without the polynomial.  We then test out all possible interactions and choose the ones that seem significant and also intuitive.  We choose the following interactions: AGE_G:HXSMOKE, RACE_G:HXSMOKE, RACE_G:HXCHF, HXSMOKE:LVEF_R, HXCHF:HXMI, HXDIAB:NUMDZV, HXMI:LVEF_R, HXMI:NUMDZV, and LVEF_R:NUMDZV.  Each of these were significant under each of the link functions, and also many of them are make intuitive sense according to our current understanding of cardiovascular health.
+
+#### Results
+We now report both the finalized coefficients and certain measures of goodness of fit for this binary regression.  To assess the model fit, we use ROC curves to find AUC, k-fold cross-validation and pseudo-$R^2$.  After analyzing the these measures, it seems clear that these different link functions produces extremely similar models.  For this reason, we just report the coefficients, standard error, and confidence intervals for the coefficients under the generalized linear model with the logit link function in the following table.
+```{r, cache = TRUE, echo = FALSE, message = FALSE}
+conf.bounds = confint(sig.age.num.int.mod)
+beta.frame = data.frame(
+  logit.est = round(coef(sig.age.num.int.mod),2),
+  logit.se = round(summary(sig.age.num.int.mod)$coefficients[,2],2),
+  probit.est = round(coef(probit.mod),2),
+  probit.se = round(summary(probit.mod)$coefficients[,2],2),
+  cloglog.est = round(coef(clog.log.mod),2),
+  cloglog.se = round(summary(clog.log.mod)$coefficient[,2],2)
+)
+logit.conf.frame = data.frame(
+  logit.est = round(coef(sig.age.num.int.mod),2),
+  logit.se = round(summary(sig.age.num.int.mod)$coefficients[,2],2),
+  lower = round(conf.bounds[,1],2),
+  upper = round(conf.bounds[,2],2),
+  odds = exp(coef(sig.age.num.int.mod))
+  #prob = round(exp(coef(sig.age.num.int.mod)) / (1 + exp(coef(sig.age.num.int.mod))),2)
+)
+rownames(beta.frame) = rownames(logit.conf.frame) = rownames(beta.frame) %>% gsub("cath1.","",.)
+kable(logit.conf.frame,digits = 4) 
+```
+
+If we analyze this table, it is clear that many of these predictors we have chose are significant under the Wald-test. The $e^{\beta_0}$, which is the exponentiated intercept, as the odds of our baseline individual, which is someone who doesn't exhibit any of the characteristics described by our categorical variables.  In our case, the baseline probability of MI is the following: $\frac{\exp\{-2.21\}}{1 + \exp\{-2.24\}} = 0.219$, which is quite high considering the prevalence of the of MI in our working dataset is 14.8%.  Among other reasons, I think the reason this is happening is because the baseline for our design would be someone aged zero, and since we are using a quadratic for age, this would be high.  This also demonstrates a flaw in using age as a continuous covariate.  There are only 11 observations of individuals in the lowest age division, which indicates that there is fairly low prevalence of cardiac catheterization in younger individuals.  
+
+Due to the design of our model, some $\beta$ coefficients are quite easy to interpret, but others are not.  For example, the coefficient for history of cerebrovascular disease is significant but is not seen in any interaction terms.  Thus we can say that holding all others constant, $e^{\beta_{\text{HXCEREB}}}$ represents the odds ratio between someone with history of cerebrovasucular disease and without.  The effect of other variables is more difficult to interpret due to polynomials and interaction terms.  For example, we show how to interpret the effect of one year increase in age according to our model.
+\begin{align*}
+&\frac{\exp\{\beta_{\text{AGE}}(x+1) + \beta_{\text{AGE}^2} (x+1)^2 + \alpha_{\text{AGE:HXSMOKE}(x+1)(x_{\text{smoke}}) }\} }{\exp\{\beta_{\text{AGE}}x + \beta_{\text{AGE}^2} x^2 + \alpha_{\text{AGE:HXSMOKE}(x)(x_{\text{smoke}}) }\}} \\
+&= \frac{e^{\beta_{\text{AGE}}x}e^{\beta_{\text{AGE}}}e^{\beta{\text{AGE}^2}x^2}e^{\beta{\text{AGE}^2}2x}e^{\beta{\text{AGE}^2}}e^{\alpha_\text{AGE:HXSMOKE}(x)(x_{\text{smoke}})}e^{\alpha_\text{AGE:HXSMOKE}(x_{\text{smoke}})} }{e^{\beta_{\text{AGE}}x}e^{\beta{\text{AGE}^2}x^2}e^{\alpha_{\text{AGE:HXSMOKE}(x)(x_{\text{smoke}})}}} \\
+&= e^{\beta_{\text{AGE}}}e^{\beta{\text{AGE}^2}2x}e^{\beta{\text{AGE}^2}}e^{\alpha_\text{AGE:HXSMOKE}(x_{\text{smoke}})} \\
+& = e^{\beta_{\text{AGE}}+\beta{\text{AGE}^2}2x + \beta{\text{AGE}^2} \alpha_\text{AGE:HXSMOKE}(x_{\text{smoke}})}
+\end{align*}
+Thus, the interpretation of a one unit increase in age is not nearly as simple as the coefficient for history of cerebrovascular disease because it not only depends on the current value of age, but it also depends on the value the smoking status of the individual.
+
+To assess whether this model is actually a good fit of the data, we analysis ROC curves to find AUC and we also find pseudo-$R^2$.  To begin, we analyze the Receiver Operating Characteristic (ROC) curve for this.  This curve is a plot of the sensitivity across values of $\pi_0$ (sensitivity is described as $Pr(\hat y = 1 | y = 1)$).  In our case, the optimal $\pi_0= 0.1505$, and we find that the area under the curve is $0.6252$, which shows the concordance index.  The AUC for this model is not good.  The following plot on the left shows our ROC curve compared with a 1-1 line.  Ideally, in this plot, we would like the OC curve to be near 1 for sensitivity and 1 for specificity, but it is clear that is not achieved in this plot. When we find the pseudo-$R^2$, which is defined as $1 - \frac{L(\hat\mu;y)}{L(\hat\mu_0;y)} = 0.0296$.  This is also very bad.  Both measures indicate that this model may not be very well suited for these data.  These measures were very similar for both the probit and complementary log log link functions.  The following plots on the right show probability of MI predictions for 100 randomly selected individuals from the dataset.  They show the predictions for each of the log-link functions with both age and LVEF_R on the x-axis.  It is clear analyzing these plots that the link-functions produce quite similar results, especially near where the bulk of the data are where the predictions are nearly perfectly overlapped.
+```{r, echo = FALSE, fig.height=3.5}
+par(mfrow = c(1,3))
+#, mar = c(1.8,1.8,1.3,1.3)
+plot(roccurve.logit, main = "ROC Logit", col = rgb(1,0,0,alpha = .25))
+lines(roccurve.probit, main = "ROC Probit", col = rgb(0,1,0,alpha = .25))
+lines(roccurve.cloglog, main = "ROC cloglog", ylab = NULL, col = rgb(0,0,1,alpha = .25))
+
+# Plot random sample I think that would be better because there are a lot.
+#par(mfrow = c(1,2), mar = c(1.8,1.8,1.3,1.3))
+rand.samp = sample(length(num.age.cath$cath1.LVEF_R),size = 100)
+plot(num.age.cath$cath1.LVEF_R[rand.samp], prob.logit[rand.samp], col=rgb(1,0,0,alpha=0.25), pch = 19 , main = "Pred. Prob. by LVEF_R",ylab = "Predicted Probability", xlab = "LVEF_R")
+points(num.age.cath$cath1.LVEF_R[rand.samp], prob.probit[rand.samp], col=rgb(0,1,0,alpha=0.25), pch = 19 )
+points(num.age.cath$cath1.LVEF_R[rand.samp], prob.cloglog[rand.samp], col=rgb(0,0,1,alpha=0.25), pch = 19 )
+
+# AGE
+plot(num.age.cath$cath1.AGE_G[rand.samp], prob.logit[rand.samp], col=rgb(1,0,0,alpha=0.25), pch = 19 , main = "Pred. Prob. by AGE_G",ylab = "Predicted Probability", xlab = "AGE")
+points(num.age.cath$cath1.AGE_G[rand.samp], prob.probit[rand.samp], col=rgb(0,1,0,alpha=0.25), pch = 19 )
+points(num.age.cath$cath1.AGE_G[rand.samp], prob.cloglog[rand.samp], col=rgb(0,0,1,alpha=0.25), pch = 19 )
+```
+
+
+A goal in this analysis is to understand how well this model can predict MI.  To do this we perform k-fold cross-validation.  Although we have an extremely large dataset and could probably use a more folds, we choose to use 10-fold cross validation, which is where we split the data into 10 mutually exclusive subsets.  We then hold out each of the folds and fit the model on the remaining folds and validate the results based on observed values in the folds.  We can test accuracy in this way, and we find that our accuracy is 0.85.  Although this sounds high, it is quite poor because the prevalence of MI in the dataset is approximately 0.15.  Cohen's
+$\kappa$ normalizes accuracy by a baseline of random chance/expectation.  In other words, it measures how well we do beyond that expected by chance alone.  According to our cross-validation, our $\kappa = 0$, which is incredibly bad.  This means that essentially our predictions are not any better than using random chance and the null model of prevalence of MI.  These results validating the model show some interesting features about fitting a model to this data.
+
+#### Conclusions
+We used analysis of deviance to understand which of the models is most appropriate.  We decided to treat age as a continuous variable and add a second-order polynomial term also.  We also added a second-order polynomial term in this.  Treating this variables as such showed improvement in the amount of deviance explained.  We included the following interactions in our model that were significant under a Wald-test: AGE_G:HXSMOKE, RACE_G:HXSMOKE, RACE_G:HXCHF, HXSMOKE:LVEF_R, HXCHF:HXMI, HXDIAB:NUMDZV, HXMI:LVEF_R, HXMI:NUMDZV, and LVEF_R:NUMDZV.  Although some of the coefficients were different under the three different link functions we used, the results of the models were very similar.  Thus, we decided to use the log(odds) link function. 
+
+Although this model outperformed other models we tested it against using analysis of deviance, there are very clear limitations.  The AUC of our ROC curve is not very high, which indicates that our concordance index is not good.  Also, the pseudo-$R^2$ describes that our model is only describing 0.0296 of the deviance in this data.  Finally, the results from cross-validation describe our predictive ability like the null model. This lack of predictive ability might be because MI is hard to predict.  Even understanding certain key factors about an individual, we are predictive an even in a human.  Humans are complex organisms, and it can be very difficult to predict events involving them, even a medical one.  Thus, even though we might have the leading predictors of MI, the act of prediction is still extremely difficult. 
+
+However, even though this model is not good, there are things that we can draw from this analysis.  There are explanatory variables described in this dataset that seem to influence the response.  Race, severity of congestive heart failure, history of congestive heart failure, history of MI, history of diabetes, age, and lvef_r seem to have some effect on the probability of someone experiencing MI.  We saw this throughout all the models we tested, but the extent of which might be difficult to quantify for certain since the model we use doesn't seem appropriate for the data.  There are things that we could have considered or changed. We could have used a General Additive Models since we experienced non-linearities in both LVEF_R and age.  We also could have treated the age variable differently and maybe done some hierarchical structure with age since the first age group was so much different than the others.  We also could have handled the missing data differently, which might have changed our results since we discarded so much data. Although we did explore the influence and residual diagnostics, we did not display them in this code or report.  We could have explored these ideas more because there might have been extremely influential or anomalous cases, but we chose not to explore them as deeply simply because of the size of the data.  We justified that extreme cases may not influence as much when we have approximately 22,000 observations

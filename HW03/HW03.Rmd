@@ -17,7 +17,7 @@ The case most likely to receive the death penalty is one with a white defendent,
 ### Part B Solution
 \begin{align*}
 \hat\alpha = -0.2 \qquad &\hat\beta_1^D = -0.17 &&\hat\beta_1^V = -0.91 &&&\hat\beta_1^F = -3.98 \\
-&\hat\beta_2^D = 0 &&\hat\beta_2^V = 0 &&& \hat\beta_2^F = -2.02 \\
+&\hat\beta_2^D = 0 &&\hat\beta_2^V = 0 &&& \hat\beta_2^F = -1.96 \\
 &\ &&\ &&&\hat\beta_3^F = 0
 \end{align*}
 
@@ -81,7 +81,10 @@ It seems that the effect of gender is significant and also there is a difference
 ```{r}
 missing.model.int = glm(missing ~ female + age1418 + age19up + female:age1418 + female:age19up, data = missing.ind, family = binomial(link = "logit"))
 summary(missing.model.int)
+
+anova(missing.model.int,missing.model, "Chisq")
 ```
+This model with interactions doesn't actually seem to improve the initial model.
 
 
 ##4. Agresti 6.32 (Residuals for Binary Data)
