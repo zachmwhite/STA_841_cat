@@ -1,0 +1,101 @@
+---
+title: "Homework 3"
+author: "Zach White"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(vcdExtra)
+```
+
+##1. Agresti 5.17 (Death Penalty in North Carolina)
+
+### Part A Solution
+The case most likely to receive the death penalty is one with a white defendent, white victim, and two different additional factors, which has the odds ratio of compared to the baseline. $e^{\hat\alpha + \hat\beta_2^D + \hat\beta_2^V + \hat\beta_3^F} = e^{-5.26 + 0.17 + 0.91 + 3.98}$.  The resulting probability is the following: $\frac{e^{-5.26 + 0.17 + 0.91 3.98}}{1 + e^{-5.26 + 0.17 + 0.91 + 3.98}} = .45$
+
+### Part B Solution
+\begin{align*}
+\hat\alpha = -0.2 \qquad &\hat\beta_1^D = -0.17 &&\hat\beta_1^V = -0.91 &&&\hat\beta_1^F = -3.98 \\
+&\hat\beta_2^D = 0 &&\hat\beta_2^V = 0 &&& \hat\beta_2^F = -2.02 \\
+&\ &&\ &&&\hat\beta_3^F = 0
+\end{align*}
+
+### Part C Solution
+\begin{align*}
+\hat\alpha = -2.72 \qquad &\hat\beta_1^D = -0.085 &&\hat\beta_1^V = -0.455 &&&\hat\beta_1^F = -2 \\
+&\hat\beta_2^D = 0.085 &&\hat\beta_2^V = 0.455 &&& \hat\beta_2^F = 0.02 \\
+&\ &&\ &&&\hat\beta_3^F = 1.98
+\end{align*}
+
+##2. Agresti 5.26 (Using OR to Approximate Relative Risk)
+According to the model 5.1 that is desired, $\pi(x) = \frac{\exp\{\alpha+\beta x\}}{1 + \exp\{\alpha + \beta x\}}$.  If $\pi (x)$ is small, then that would mean that comparitatively, $\exp\{\alpha+\beta x\}$ is much smaller than $1 + \exp\{\alpha + \beta x\}$, which also implies that $1 > \exp\{\alpha+\beta x\}$
+
+\begin{align*}
+\frac{\pi(x+1)}{\pi(x)} &= \frac{\exp\{\alpha+\beta (x+1)\}}{1+\exp\{\alpha+\beta (x+1)\}} \frac{1+ \exp\{\alpha+\beta x\}}{\exp\{\alpha+\beta x\}} \\
+&= \frac{\exp\{\alpha\}\exp\{\beta x\}\exp\{\beta\} }{\exp\{\alpha\}\exp\{\beta x\}} \frac{1+ \exp\{\alpha+\beta x\}}{1+\exp\{\alpha+\beta (x+1)\}} \\
+&= {\exp\{\beta\} } \frac{1+ \exp\{\alpha+\beta x\}}{1+\exp\{\alpha+\beta (x+1)\}}\\
+&\approx \exp\{\beta\} \text{ since } \frac{1+ \exp\{\alpha+\beta x\}}{1+\exp\{\alpha+\beta (x+1)\}} \rightarrow 1 
+\end{align*}
+
+
+##3. Agresti 6.6 (Missing People)
+
+### Solution
+I propose the following model to fit this data:
+
+\begin{gather}
+\log(\frac{\pi_i}{1 - \pi_i}) = \beta_0 + \beta_1 x_{i} + \beta_2 \text{I(age = 14-18)} + \beta_3 \text{I(age > 19)} \\
+x_{1i} = \Bigg\{ \begin{split}0 \text{ if male} \\
+1 \text{ if female}
+\end{split}
+\end{gather}
+where $x_{1i}$
+```{r}
+still.miss = c(33,38,63,108,157,159)
+total = c(3271,2486,7256,8877,5065,3520)
+not.miss = total - still.miss
+missing = c(rep(1,6),rep(0,6))
+Freq = c(still.miss,not.miss)
+female = c(0,1,0,1,0,1,0,1,0,1,0,1)
+age1418 = c(0,0,1,1,0,0,0,0,1,1,0,0)
+age19up = c(0,0,0,0,1,1,0,0,0,0,1,1)
+
+missing.df = data.frame(missing,Freq,female,age1418,age19up)
+missing.ind = expand.dft(missing.df)
+
+missing.model = glm(missing ~ female + age1418 + age19up, data = missing.ind, family = binomial(link = "logit"))
+summary(missing.model)
+```
+The interpretation of of the coefficients are as follows:
+$e^{\beta_0}$ represents the odds of a child still being missing after a year who is a male and less than 13.
+
+$e^{\beta_1}$ represents the odds-ratio of still being missing after a year between male and female.
+
+$e^{\beta_2}$ represents he odds-ratio of still being missing after a year between a child less than 13 years old and between 14-18.
+
+$e^{\beta_3}$ represents he odds-ratio of still being missing after a year between a child less than 13 years old and older than 19.
+
+It seems that the effect of gender is significant and also there is a difference between between the age of less than 13 and older than 19.  We can also include interactions because those might be of interest in our case.
+
+```{r}
+missing.model.int = glm(missing ~ female + age1418 + age19up + female:age1418 + female:age19up, data = missing.ind, family = binomial(link = "logit"))
+summary(missing.model.int)
+```
+
+
+##4. Agresti 6.32 (Residuals for Binary Data)
+For ungrouped binary data, explain why when $\hat\pi_i$ is near 1, residuals are necessarily either small and positive or large and negative.  What happens when $\hat\pi_i$ is near $0$?
+
+### Solution
+
+Under logistic regression and binary data, there are obviosly only two responses: success(1) or failure (0).  Thus, when $\hat\pi_i$ is near 1 and the observed value is a success, the residual will of course be small and positive.  On the other side of the spectrum, if $\hat\pi_i$ is near one and the observed value is zero, then the residual would be large and negative.
+
+By similar reasoning as above, when $\hat\pi_i$ is near 0, there will be small and negative when a failure is observed or large and positive residuals when a success is observed.
+
+
+
+
+
+
+

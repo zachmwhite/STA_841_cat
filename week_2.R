@@ -37,3 +37,26 @@ cor(dose,hyp)
 # Code from class
 toxicity = c("")
 
+# Repeating Code from Class. Line for line
+toxicity = c("none","mild","severe")
+dosevec = c("0","10","100","1000")
+datalabel = list(tox = toxicity,dose = dosevec)
+table.tox = expand.grid(tox = toxicity,dose = dose)
+dat = c(92,6,2,90,7,3,89,8,3,88,3,9)
+table.tox = cbind(table.tox,count = dat)
+xtabs(count~dose+tox,data = table.tox)
+levels(table.tox$tox) = 1:3
+levels(table.tox$dose) = 1:4
+res = table.tox[,1:2][rep(1:nrow(table.tox),table.tox$count),]
+m2 = (length(as.numeric(as.character(res$dose)))-1)*(cor(as.numeric(as.character(res$dose)),as.numeric(as.character(res$tox)))^2)
+
+
+######################
+freq = c(92,6,2,90,7,3,89,8,3,88,3,9)
+dose = c(1,1,1,10,10,10,100,100,100,1000,1000,1000)
+Toxicity = c('None',"Mild","Severe",'None',"Mild","Severe",'None',"Mild","Severe",
+             'None',"Mild","Severe")
+Toxord = rep(c(0,1,2),4)
+drugtox = data.frame(freq,dose,Toxord)
+drugtoxtable = xtabs(drugtox$freq~drugtox$dose+drugtox$Toxord)
+GKgamma(drugtoxtable)
