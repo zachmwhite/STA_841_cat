@@ -6,6 +6,15 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(GGally)
+library(VGAM)
+library(gridExtra)
+library(vcdExtra)
+library(nnet)
+library(magrittr)
+library(MASS)
+library(knitr)
 ```
 
 ## Provide clearly documented code in an R markdown document where appropriate. Whenever possible, provide statistical evidence to support your answers.
@@ -22,31 +31,298 @@ AGE_G (categorized as 1=18-24; 2=25-29; 3=30-34; 4=35-39; 5=40-44; 6=45-49; 7=50
 
 HXSMOKE (1=history of smoking, 0=no history of smoking)
 
-
-
-
 ###1a. Descriptive Statistics
 Explore relationships among the four variables using graphical displays and describe your findings.
+
+#### Solution
+```{r, cache = TRUE}
+load("cathhw4.Rdata")
+cath = fac.cath = num.cath = cathhw4
+cath$cath1.CHFSEV = fac.cath$cath1.CHFSEV = num.cath$cath1.CHFSEV = factor(cath$cath1.CHFSEV)
+cath$cath1.GENDER = fac.cath$cath1.GENDER = num.cath$cath1.GENDER = factor(cath$cath1.GENDER)
+cath$cath1.HXSMOKE = fac.cath$cath1.HXSMOKE = num.cath$cath1.HXSMOKE = factor(cath$cath1.HXSMOKE)
+sum(is.na(cath))
+
+# Test this out a little bit more
+fac.cath$cath1.AGE_G = factor(cath$cath1.AGE_G)
+
+# The visualizations for two factors.
+
+# Numeric Age, Factor CHFSEV
+age.mid.vec = c(21,27,32,37,42,47,52,57,62,67,72,77,85)
+for(i in 1:13){
+  num.cath$cath1.AGE_G[num.cath$cath1.AGE_G == i]  = age.mid.vec[i] 
+}
+mid.age = quantile(age.mid.vec,.5)
+num.cath$centered.age = num.cath$cath1.AGE_G - mid.age
+# What about the scaled age?
+with(num.cath,do.call(rbind,
+                      tapply(cath1.AGE_G,cath1.CHFSEV, function(x) c(M = mean(x), SD = sd(x)))))
+num.cath$age10 = num.cath$cath1.AGE_G / 10
+
+prop.tab.chfsev.age = log.odds.tab = table.chfsev.age = as.matrix(table(num.cath$cath1.CHFSEV, num.cath$cath1.AGE_G))
+colnames(table.chfsev.age) = age.mid.vec
+for(i in 1:5){
+  prop.tab.chfsev.age[i,] = table.chfsev.age[i,] / colSums(table.chfsev.age)
+  if(i >= 2){
+    log.odds.tab[i,] = log(prop.tab.chfsev.age[i,] / prop.tab.chfsev.age[1,])
+  }
+}
+log.odds.tab = log.odds.tab[-1,]
+log.odds.df = as.data.frame(log.odds.tab)
+log.odds.df[log.odds.df == -Inf] = -5
+
+table(num.cath$cath1.CHFSEV,num.cath$cath1.AGE_G)
+
+ggplot(log.odds.df, aes(x = Var2, y = Freq, group = Var1, color = Var1)) + geom_line(size=1) +
+  theme_bw() +
+  labs(x = "Age",
+       y = "log(odds) to referent group (CHFSEV = 0)",
+       color = "CHFSEV Level",
+       title = "log(odds) of differing levels of CHFSEV to CHFSEV = 0 by Age",
+       subtitle = "Replacing values of -Inf with -5")
+```
+
+For this plot, it seems like the log odds to the referent group is pretty clearly linearly related, except for some sparse categories in the younger categories.  This seems like a good sign that we will be able to model age as a simple linear term.
+
+```{r, cache = TRUE}
+age.gender.hx.df = data_frame()
+for(i in seq_along(age.mid.vec)){
+  df = data_frame(
+    age = age.mid.vec[i],
+    gender.age = mean(num.cath$cath1.GENDER[num.cath$cath1.AGE_G == age.mid.vec[i]] == 1),
+    hx.age = mean(num.cath$cath1.HXSMOKE[num.cath$cath1.AGE_G == age.mid.vec[[i]]] == 1)
+  )
+  age.gender.hx.df = bind_rows(age.gender.hx.df,df)
+}
+gender.by.age = ggplot(age.gender.hx.df,aes(x = age, y = gender.age)) + geom_line() +
+  theme_bw() +
+  labs(title = "Proportion of females by age",
+       y = "Proportion of Females")
+
+smoking.by.age = ggplot(age.gender.hx.df,aes(x = age, y = hx.age)) + geom_line() +
+  theme_bw() +
+  labs(title = "Proportion of History of Smoking by Age",
+       y = "Proprtion of History of Smoking")
+
+grid.arrange(gender.by.age,smoking.by.age, ncol = 2)
+```
+The plots are meant to explore the relationships between the covariates, which might be useful as far as the interactions are concerned, but not necessarily considering that interactions are more about how the covariates influence each other with respect to the response.  However, given that we are supposed to explore the relationships between all four variables, we explore these plots.  
+
+```{r, cache = TRUE}
+par(mfrow = c(1,2), mar = c(1.8,1.8,1.3,1.3))
+mosaicplot(table(num.cath$cath1.CHFSEV,num.cath$cath1.GENDER), main = "CHFSEV by Gender",
+           ylab = "Gender", 
+           xlab = "CHFSEV")
+mosaicplot(table(num.cath$cath1.CHFSEV, num.cath$cath1.HXSMOKE), main = "CHFSEV by History of Smoking",
+           ylab = "History of Smoking",
+           xlab = "CHFSEV")
+```
+
+It is clear that looking at these mosaic plots shows that for every level of the covariates, the most common CHFSEV level is 0, which is to be expected.  Also, it is important to note that it seems like for females the lines for the different levels of CHFSEV are higher, which seems to indicate that the proportion of females in those higher levels is higher than males in the baseline group of CHFSEV = 0.  This story is less clear when analyzing smoking.
 
 ###1b. Baseline Category Logistic Model
 Fit a baseline category logistic model to the heart failure severity data, with the baseline category defined as CHFSEV=0, and main effects of the predictors age group, gender, and smoking history. Use the functional form of age group that provides the best fit to the data and assess whether any interaction terms are needed. Provide a clearly-labeled table that gives the OR's and 95\% CI's relating the predictors to heart failure severity and interpret all estimates that are statistically significant at the $\alpha=0.05$ level.
 
+#### Solution
+```{r results= 'hide', cache = TRUE, message= FALSE}
+fac.cath$cath1.AGE_G = relevel(fac.cath$cath1.AGE_G, ref = "13")
+fac.mod = multinom(cath1.CHFSEV ~ cath1.AGE_G + cath1.HXSMOKE + cath1.GENDER, data = fac.cath)
+summary(fac.mod)$deviance
+num.mod = multinom(cath1.CHFSEV ~ centered.age + cath1.HXSMOKE + cath1.GENDER, data = num.cath)
+summary(num.mod)$deviance
+poly.mod = multinom(cath1.CHFSEV ~ poly(centered.age,2) + cath1.HXSMOKE + cath1.GENDER, data = num.cath)
+summary(poly.mod)$deviance
+
+# What about interactions? If we add interactions, then no way will we do the factor ones.
+# Change referent group
+fac.mod.int = multinom(cath1.CHFSEV ~ . + .:., data = fac.cath)
+sum.fac.int = summary(fac.mod.int)
+#dim(sum.fac.int$coefficients)[2]
+z.fac.int = sum.fac.int$coefficients / sum.fac.int$standard.errors
+p.fac.int = (1 - pnorm(abs(z.fac.int),0,1))*2
+## If we do this one, eliminate the interaction between cath1.AGE_G:cath1.HXSMOKE
+
+
+poly.mod.int = multinom(cath1.CHFSEV ~ poly(centered.age,2) + cath1.HXSMOKE + cath1.GENDER + poly(centered.age,2):cath1.HXSMOKE +
+                         poly(centered.age,2):cath1.GENDER + cath1.HXSMOKE:cath1.GENDER, data = num.cath)
+sum.poly.int = summary(poly.mod.int)
+#sum.poly.int$deviance
+#dim(sum.poly.int$coefficients)[2]
+
+#sum.fac.int$deviance - sum.poly.int$deviance
+```
+
+```{r}
+anova(fac.mod, num.mod, poly.mod, test = "Chisq")
+```
+
+Analyzing these values, it seems like centered continuous centered age, continuous centered age and polynomial term for the centered age, and factor for age are all comparable. There doesn't seem to be a clear improvement between these different models, and thus for interpretability sake, we will treat age as continuous and then center them so the coefficients for our model are reasonable.
+
+```{r results= 'hide', cache = TRUE, message= FALSE}
+# Centered age with all the interactions.
+num.mod.int = multinom(cath1.CHFSEV ~ centered.age + cath1.HXSMOKE + cath1.GENDER + centered.age:cath1.HXSMOKE +
+                         centered.age:cath1.GENDER + cath1.HXSMOKE:cath1.GENDER, data = num.cath)
+sum.num.int = summary(num.mod.int)
+#dim(sum.num.int$coefficients)[2]
+z.num.int = sum.num.int$coefficients / sum.num.int$standard.errors
+p.num.int = (1 - pnorm(abs(z.num.int),0,1))* 2
+
+# Leave out centered age:Gender
+wo.gend.age.int = multinom(cath1.CHFSEV ~ centered.age + cath1.HXSMOKE + cath1.GENDER + centered.age:cath1.HXSMOKE +
+                        cath1.HXSMOKE:cath1.GENDER, data = num.cath)
+sum.wo.gend.age.int = summary(wo.gend.age.int)
+```
+
+```{r}
+p.num.int
+anova(num.mod.int,wo.gend.age.int, test = "Chisq")
+```
+We first test all of the interactions.  I test the significance of the coefficient to see if there are any that are universally insignificant.  Doing so, it seems clear that leaving out the interaction between age and gender does not harm our model significantly.
+
+```{r}
+z.wo.gend.age.int = summary(wo.gend.age.int)$coefficients / summary(wo.gend.age.int)$standard.errors
+p.wo = (1 - pnorm(abs(z.wo.gend.age.int),0,1))*2
+```
+Although it sems like the history of smoking is not significant for most referent groups, when comparing CHFSEV = 1 to CHFSEV = 0, then it is clearly significant.  We will keep it in our model for this reason.  Also, the interaction between history of smoking and gender describes a similar story.
+
+```{r, cache = TRUE}
+OR.mat = exp(coef(wo.gend.age.int))
+conf.array = exp(confint(wo.gend.age.int))
+
+cvfsev1 = cbind(OR.mat[1,],conf.array[,,1])
+cvfsev2 = cbind(OR.mat[2,],conf.array[,,2])
+cvfsev3 = cbind(OR.mat[3,],conf.array[,,3])
+cvfsev4 = cbind(OR.mat[4,],conf.array[,,4])
+
+rownames(cvfsev1) = rownames(cvfsev2) = rownames(cvfsev3) = rownames(cvfsev4) = c("Referent Group","Centered Age","Hist. Smoke", "Gender","Age:Smoking","Smoking:Gender")
+colnames(cvfsev1) = colnames(cvfsev2) = colnames(cvfsev3) = colnames(cvfsev4) = c("OR","Lower","Upper")
+
+kable(cvfsev1, digits = 4, format = "latex", caption = "Coefficients comparing cath1.CHFSEV = 1 to cath1.CHFSEV = 0")
+kable(cvfsev2, digits = 4, format = "latex", caption = "Coefficients comparing cath1.CHFSEV = 1 to cath1.CHFSEV = 0")
+kable(cvfsev3, digits = 4, format = "latex", caption = "Coefficients comparing cath1.CHFSEV = 1 to cath1.CHFSEV = 0")
+kable(cvfsev4, digits = 4, format = "latex", caption = "Coefficients comparing cath1.CHFSEV = 1 to cath1.CHFSEV = 0")
+```
+It is important to note that for all of these interpretations, the referent group is a a male between 50-54 with no history of smoking.
+
+Holding all else constant an increase of one year in age is associated with an odds ratio of $e^{\beta_\text{c.age} + \beta_\text{Smoking:Age}} = e^{0.021 + .0131I(\text{H.Smoking})}$ (1.021 if not a smoker 1.03 if a smoker) of being in the CHFSEV = 1 group instead of 0. Thus the change associated with age also depends on the status of history of smoking.
+
+Holding all else constant, a smoker is associated with an odds-ratio of $e^{\beta_\text{Smoking} + \beta_\text{Smoking:Age}x_{\text{c.age}} + \beta_\text{Smoking:Gender}I(\text{GEnder = female})} = e^{.38 + 0.131x_\text{c.age} - .51I(\text{Gender = Female})}$.  Thus the change associated with smoking depends on the age and gender of the individual.
+
+Holding all else constant, females are associated with an odds-ratio of $e^{\beta_\text{Gender} + \beta_\text{Gender:Smoking}I(\text{Smoker})} = e^{.71 + -0.519I(\text{Smoker})}$ = 1.21 if a smoker and 2.03 if not a smoker. The change associated with smoking depends on the history of smoking of the individual.
+
+Note these interpretations are for comparing the logit($\frac{\pi_{\text{CHFSEV = 1}}}{\pi_{\text{CHFSEV = 0}}}$).  The interpretations for all the other comparisons of the groups with the baseline will be similar, albeit different estimates and confidence intervals,  For this reason, I do not interpret the other ones
+
 ###1c. Prediction in Baseline Category Logistic Model
 Using your preferred linear predictor from 1b, find and report in a table the predicted probabilities of each level of heart failure severity from the baseline category logistic model for (i) a 25 year-old woman who has never smoked, (ii) a 25 year-old woman who smokes, (iii) a 25 year-old man who has never smoked, (iv) a 25 year-old man who smokes, (v) an 80 year-old woman who has never smoked, (vi) an 80 year-old woman who smokes, (vii) an 80 year-old man who has never smoked, (viii) an 80 year-old man who smokes.
+
+#### Solution
+```{r}
+pred_df = data_frame(
+  cath1.GENDER = factor(c(1,1,0,0,1,1,0,0)),
+  cath1.HXSMOKE = factor(c(0,1,0,1,0,1,0,1)),
+  centered.age = c(27,27,27,27,85,85,85,85) - mid.age
+)
+
+predict(wo.gend.age.int,pred_df, "probs")
+```
+
+These predictions make sense considering the data.
+
 
 ###1d. Proportional Odds Model
 Evaluate whether the proportional odds assumption is satisfied for any of the predictors, using the same functional forms as in 1b. Provide test results to support your conclusions.
 
+#### Solution
+```{r}
+mpo = vglm(ordered(num.cath$cath1.CHFSEV) ~ centered.age + cath1.HXSMOKE + cath1.GENDER + centered.age:cath1.HXSMOKE +
+                        cath1.HXSMOKE:cath1.GENDER, data = num.cath, family = cumulative(parallel = TRUE))
+sum.wo.gend.age.int = summary(mpo)
+just.age.par = vglm(ordered(num.cath$cath1.CHFSEV) ~ centered.age + cath1.HXSMOKE + 
+                      cath1.GENDER + centered.age:cath1.HXSMOKE + 
+                      cath1.HXSMOKE:cath1.GENDER, data = num.cath, family = 
+                      cumulative(parallel = FALSE~cath1.HXSMOKE + cath1.GENDER))
+sum.just.age.par = summary(just.age.par)
+
+age.gender.par =vglm(ordered(num.cath$cath1.CHFSEV) ~ centered.age + cath1.HXSMOKE +
+                      cath1.GENDER + centered.age:cath1.HXSMOKE + 
+                      cath1.HXSMOKE:cath1.GENDER, data = num.cath, family = 
+                      cumulative(parallel = FALSE~cath1.HXSMOKE))
+sum.age.gender.par = summary(age.gender.par)
+```
+
 ###1e. Interpretation of Estimates in Proportional Odds Model
 Regardless of your conclusions in part 1c, use the same functional forms as in 1b and provide a clearly-labeled table that gives the OR's and 95\% CI's relating the predictors to heart failure severity in the (fully) proportional odds model. Interpret all estimates that are statistically significant at the $\alpha=0.05$ level.
+
+#### Solution
+```{r}
+or.mat = cbind(exp(-coef(mpo)), exp(-confint(mpo))[,c(2,1)])
+colnames(or.mat) = c("OR","Lower","Upper")
+or.mat
+```
+
+These intercepts are large because under the proportional odds model, we are dealing with the logit(P[Y<=1]), logit(P[Y<=2]), logit(P[Y<=3]), and logit(P[Y<=4]).  Since the most likely state is CHFSEV = 0 by a lot,  it makes sense that the intercepts are as follows because as we get to the more extreme ordered end (CHFSEV = 4), the logit(P[Y<=4]) is extremely high.
+
+Under the proportional-odds model, all of the coefficients are significant, and the odds-ratios represent the following:
+
+Holding all else constant, for every year somone lives, they have $e^{\beta_{\text{c.age}} + \beta_\text{c.age:smoking}I(\text{Smoking})} = e^{(0.025  + 0.012 I(\text{Smoking}))} =$ 1.037 (if a smoker) or 1.025 (if not a smoker ) times the odds of being in CHFSEV = 4 versus CHFSEV = 0,1,2, or 3.  We can make the same comparison of CHFSEV = 3,4 versus CHFSEV = 0,1,2, and so on until CHFSEV = 1,2,3,4 versus CHFSEV = 0.
+
+Holding all else constant, people who smoke are associated with an odds ratio of $e^{\beta_{\text{smoke}}I(\text{Smoking}) + \beta_\text{c.age:smoking}x_\text{Age} + \beta_{\text{smoke:Gender}}I(\text{Female})} = e^{0.13  + 0.012x_\text{Age} - .25I(\text{Female})}$ when comparing CHFSEV = 4 versus CHFSEV = 0,1,2, or 3.  We can make the same comparison of CHFSEV = 3,4 versus CHFSEV = 0,1,2, and so on until CHFSEV = 1,2,3,4 versus CHFSEV = 0.  Thus it is clear that the effect of smoking depends both on age and gender.
+
+Holding all else constant, women are associated with an odds ratio of $e^{\beta_{\text{Gender}} + \beta_\text{Gender:smoking}I(\text{Smoking})} = e^{(0.428  - 0.25 I(\text{Smoking}))} =$ 1.523 (if not a smoker) or 1.19 (if a smoker) odds of being CHFSEV = 4 versus CHFSEV = 0,1,2, or 3.  We can make the same comparison of CHFSEV = 3,4 versus CHFSEV = 0,1,2, and so on until CHFSEV = 1,2,3,4 versus CHFSEV = 0.  
 
 ###1f. Prediction in Proportional Odds Model
 Using your preferred linear predictor from 1b, find and report in a table the predicted probabilities of each level of heart failure severity from the proportional odds model for (i) a 25 year-old woman who has never smoked, (ii) a 25 year-old woman who smokes, (iii) a 25 year-old man who has never smoked, (iv) a 25 year-old man who smokes, (v) an 80 year-old woman who has never smoked, (vi) an 80 year-old woman who smokes, (vii) an 80 year-old man who has never smoked, (viii) an 80 year-old man who smokes.
 
+#### Solution
+```{r}
+predictvglm(mpo,pred_df,"response")
+```
+Although there are differences, these are quite similar to the responses for the previous predictions.
+
 ##2. Agresti 8.34 (Separate Logistic Regressions)
 
+### Solution
+```{r}
+fish = c(7,4,16,3,2,13,3,0,3,8,2,0,13,9,3,8)
+invertebrates = c(1,0,3,0,2,7,9,1,7,6,4,1,10,0,9,1)
+reptile = c(0,0,2,1,0,6,1,0,1,6,1,0,0,0,1,0)
+bird = c(0,1,2,2,0,0,0,1,0,3,1,0,2,1,0,0)
+other = c(5,2,3,3,1,0,2,0,1,5,4,0,2,2,1,1)
+lake = c(rep("Hancock",4),rep("Oklawaha",4),rep("Trafford",4),rep("George",4))
+gender = rep(c(rep("Male",2),rep("Female",2)),4)
+size = rep(c(1,0),8)
 
+# Playing aroun with some stuff
+all.data = data.frame(
+  Freq = c(fish,invertebrates,reptile,bird,other),
+  species = c(rep("fish",16),rep("invertebrates",16),rep("reptile",16),rep("bird",16),rep("other",16)),
+  lake.vec = rep(lake,5),
+  gender.vec = rep(gender,5),
+  size.vec = rep(size,5)
+)
 
+test.frame = expand.dft(all.data)
+test.frame$species = relevel(test.frame$species, ref = "fish")
+
+all.mod = multinom(species ~ size.vec + lake.vec, data = test.frame)
+summary(all.mod)
+res.mat = rbind(coef(all.mod)["invertebrates",],
+summary(all.mod)$standard.errors["invertebrates",])
+rownames(res.mat) = c("Estimate","SE")
+#res.mat
+
+fi.data = test.frame %>% filter(species %in% c("fish","invertebrates"))
+fi.mod = glm(species ~ size.vec + lake.vec, data = fi.data,
+             family = binomial())
+sum.log  = summary(fi.mod)
+#sum.log$coefficients[,1:2]
+
+comp.mat= cbind(t(res.mat),sum.log$coefficients[,1:2])
+colnames(comp.mat) = c("m.Est","m.SE","log.Est","log.SE")
+comp.mat
+```
+Clearly, when we do a logistic regression under this paradigm, it is similar to the baseline multinomial model.  In this case, the first two columns are the estimate and standard error for the multinomial model and the last two columns are the estimate and standard error for the logstic regression model.  Both the estimates and standard errors are quite similar to each other.
 
 
 
