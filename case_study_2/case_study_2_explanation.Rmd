@@ -1,0 +1,63 @@
+---
+title: "Hospital and Physician Quality Assessment: Case Study 2, Due Friday, November 17 at 11:45am"
+author: Zach White
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+####Note: you are not to communicate about the case study with anyone in any format, written, oral, or otherwise, with the exception of Prof. Herring. Duke University is a community dedicated to scholarship, leadership, and service and to the principles of honesty, fairness, respect, and accountability. Citizens of this community commit to reflect upon and uphold these principles in all academic and non-academic endeavors, and to protect and promote a culture of integrity. Any communication about the case study except with Prof. Herring will be treated as a violation of Duke's honor code.
+
+####IMPORTANT NOTE:
+This assignment is subject to a seven page limit with a **minimum** 12 point standard font (reproducible code is excluded from the limit).  ONLY the FIRST seven pages of the assignment will be used when assigning points (except for the reproducible code). Part of your job is to determine the most important 7 pages of information to include in your report. Your report should be in a professional format suitable for presentation to a collaborator or supervisor on a project.
+
+####Assignment
+The Centers for Medicare and Medicaid Services (CMS) is required by Congress to evaluate hospital performance.  In addition, hospitals (and patients) have interest in ranking physicians.  We consider data on outcomes of cardiac surgical procedures in New York State from 2009-2011.  The outcome of interest is mortality within 30 days of the procedure, and variables available in the dataset *cs2.csv* include the following: physician name, hospital name, region (mutually exclusive regions of NY state), procedure type (Valve or Valve/CABG are procedures involving valve replacement; the CABG procedure is simpler and just involves a coronary artery bypass graft without valve replacement), number of cases, number of deaths, observed mortality rate per 100 cases, and expected mortality rate per 100 cases (adjusted for case mix, which accounts for the health status of patients undergoing each procedure). It is critical to use the expected mortality rate in decision making because we do not want to penalize a clinician (or hospital) for having a less healthy patient population.  Failing to take into account the case mix could lead us to penalize an outstanding hospital or physician that, by virtue of a strong reputation, attracts the patients with the poorest prognoses.
+
+Your job is to use a binomial generalized linear mixed model to evaluate performance of hospitals and physicians, with performance measured by the mortality rate within 30 days for each type of procedure. The project deliverables include the following.
+
+1. Clearly describe a binomial generalized linear mixed model, in equation form, that you will fit to the data, including specification of all distributional assumptions for the data model and for the prior distributions used. The outcome of interest is the number of deaths out of the given number of cases. Your model should include the following components:  (1) random intercepts for each hospital and each physician, with hospital random effects independent of physician random effects, and (2) fixed effects for each combination of region and procedure type. You will not use the variable for expected mortality rate in this modeling. Fit the model and provide point and interval estimates of the variances of the random effects. Treating the Queens region as a referent and using estimates from your model for a fixed hospital and clinician, provide a figure (or two figures) showing posterior medians and 95\% credible intervals of odds ratios comparing the odds of death in each region to that in Queens, separately for each procedure type. (That is, you need to show 10 odds ratios for CABG and 10 odds ratios for Valve or Valve/CABG. You do not need to interpret each individual OR obtained from the model in text.)
+
+2. For each physician, hospital, and procedure type, construct estimates of the ratio of the model-predicted mortality rate to the expected mortality rate (adjusted for case mix). This ratio will be greater than 1 if the physician is doing worse than expected given the illness of his or her patients, and this ratio will be less than 1 if the physician is doing better than expected given the case mix. Plot the posterior median ratios and credible intervals for each observed combination of physician and hospital, separately for each procedure type. In a table, include the posterior medians, credible intervals, and posterior probabilities for any cases in which the posterior probability that the ratio is greater than 1 exceeds 0.8 or is less than 0.2. 
+
+3. Assume you advise NY Methodist Hospital, which is concerned about Dr. Tortolani's mortality rate.  Explain whether Dr. Tortolani has a higher mortality rate than expected, using your analysis results and data from Dr. Tortolani's performance at NYP-Weill Cornell to support your response.
+
+4. Now assume you advise NYP-Columbia Presbyterian Hospital.  Should they be concerned about the performance of any of their clinicians?  Using your analysis results to support your response, explain why or why not.
+
+5.  Suppose Dr. Ciaburri is arguing for a salary increase on the basis that (s)he has the best mortality record in the state.  Assess whether Dr. Ciaburri is indeed a superior clinician and provide evidence to support your response.  If you are asked by CMS to select the best clinician in the state, whom would you select, and why? Provide evidence based on your analysis results to support your recommendation.
+
+6.  Obtain hospital-specific ratios and 95\% credible intervals, clearly describing the methodology you use to combine information across physicians. Plot the hospital-specific ratios and 95\% credible intervals.  If you are tasked with recognizing 5 "high-achieving" and 5 "low-achieving" hospitals for CMS, which hospitals would you select, and why?  Provide a justification based on your analysis.
+
+7. When you present results to CMS staff members, someone asks why you are using a model rather than simply basing all recommendations and decisions on the ratio of observed to expected (adjusted for case mix) deaths. Discuss advantages of using model-based estimates rather than making recommendations based on the simple ratio.
+
+
+
+####Assessment
+Your report should be submitted on Sakai as an R markdown file (no page limit), and an accompanying .pdf (7 page limit using at least 12 point font) should be **turned in to me in class on Nov 17 at 11:45am**. (Note: no exceptions this time around except in cases of illness; bring your papers to class!) In addition upload an .Rdata file containing your posterior samples (and adapt your code so that this file is read in for any post-processing analysis -- that way your papers can be graded in finite time).  All components should be completely reproducible from the markdown file (that is, all I should have to do is point to the right location of the original data set and posterior samples on my computer and run your code; you may wish to use a computing lab machine to test reproducibility). Grading will be based in large part on the following aspects of your report.
+
+1. Approach to the problem 
+  + Description of model structure and estimation procedure
+  + Approach to evaluating evidence in data in order to answer questions
+
+2. Results (answers to the individual questions posed)
+  + Logical presentation of findings supported by analysis
+  + Figures/tables with clear labels and captions, referenced and described in text 
+  + Discussion of limitations of findings: be honest; don't overstate quality of model or confidence in results! 
+  
+3. Reproducibility (analysis easily reproduced using code and posterior samples provided)
+
+4. General 
+  + References where appropriate
+  + Careful editing of manuscript for items including spelling, punctuation, and grammar
+  + Proper formatting of analysis results (publication format, as tables in a journal article, using clear axis labels)
+  + Document nicely formatted (easy to read text, logical ordering, text/captions clear and not in too small font) and adheres to font size and page specifications
+  
+##When you're done, have a Happy Thanksgiving -- gobble gobble!
+
+
+
+
+
+

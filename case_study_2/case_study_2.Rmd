@@ -1,0 +1,150 @@
+---
+title: "case_study_2"
+author: "Zach White"
+date: "November 10, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, warnings = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("lme4",repos = "http://cran.us.r-project.org")
+install.packages("brms",repos = "http://cran.us.r-project.org")
+install.packages("tidyverse",repos = "http://cran.us.r-project.org")
+install.packages("magrittr",repos = "http://cran.us.r-project.org")
+library(lme4)
+library(tidyverse)
+library(magrittr)
+library(brms)
+library(rstan)
+```
+
+```{r, echo = FALSE, results= 'hide'}
+# Load the data
+cs2 = read.csv("cs2.csv", header = TRUE, stringsAsFactors = FALSE)
+colnames(cs2) = tolower(colnames(cs2))
+colnames(cs2)[1] = "physician.name"
+inv_logit = function(x) exp(x) / (1 + exp(x))
+apply(table(cs2$hospital.name,cs2$physician.name), 2, function(x) sum(x > 0))
+cs2 = cs2 %>% mutate(obs.p.hat = number.of.deaths / number.of.cases,
+                     logit.obs.p = log(obs.p.hat / (1 - obs.p.hat)))
+
+# logitobs.p by Expected mortality rate 
+ggplot(cs2, aes(x = expected.mortality.rate, y = logit.obs.p, group = procedure, color = procedure)) +
+  geom_point()
+
+ggplot(cs2, aes(x = detailed.region, y = logit.obs.p, group = procedure, color = procedure)) + geom_point()
+ggplot(cs2, aes(x = detailed.region, y = logit.obs.p, group = detailed.region, color = procedure)) + geom_boxplot()
+
+cs2$detailed.region = factor(cs2$detailed.region)
+cs2$detailed.region = relevel(cs2$detailed.region, ref = "Queens")
+
+
+
+# It asks for each combination of procedure and region. I will first test out like classical main and interaction effects
+# And then I will test out just the interactions without the main effects
+initial.model = brm(number.of.deaths | trials(number.of.cases) ~ (1| hospital.name) + (1 | physician.name) + detailed.region + procedure + procedure:detailed.region,
+                    family = binomial("logit"),
+                    data = cs2,
+                    control = list(adapt_delta = .9)
+                    )
+
+initial.model.85 = brm(number.of.deaths | trials(number.of.cases) ~ (1| hospital.name) + (1 | physician.name) + detailed.region + procedure + procedure:detailed.region,
+                    family = binomial("logit"),
+                    data = cs2,
+                    control = list(adapt_delta = .85),
+                    iter = 5000
+                    )
+
+
+
+rand.main = brm(number.of.deaths | trials(number.of.cases) ~ (1| hospital.name) + (1 | physician.name) + procedure + detailed.region,
+                    family = binomial("logit"),
+                    data = cs2
+                    )
+
+
+
+
+cs2.expanded = data_frame()
+for(i in 1:nrow(cs2)){
+  n.case = cs2$number.of.cases[i]
+  n.deaths = cs2$number.of.deaths[i]
+  base_frame = data_frame(
+    physician.name = rep(cs2$physician.name[i],n.case),
+    hospital.name = rep(cs2$hospital.name[i],n.case),
+    detailed.region = rep(cs2$detailed.region[i],n.case),
+    procedure = rep(cs2$procedure[i],n.case),
+    death = rep(c(1,0),c(n.deaths,n.case - n.deaths))
+  )
+  cs2.expanded = bind_rows(cs2.expanded,base_frame)
+}
+
+bin.model = brm(death ~ (1| hospital.name) + (1 | physician.name) + detailed.region + procedure + procedure:detailed.region,
+                family = bernoulli,
+                data = cs2.expanded)
+
+
+
+```
+There are some physicians that do work at multiple hospitals.
+
+```{r}
+# Explore Data
+```
+
+```{r}
+# Initial Models
+```
+
+```{r}
+#Finalized Models
+
+# Load posterior draws if they already exist
+destfile= "posterior_draws.Rdata" 
+ if (!file.exists(destfile)) {
+    # Do posterior draws here.
+
+ } else{
+   load("posterior_draws.Rdata")
+ }
+
+#save posterior draws
+
+#
+
+
+```
+
+```{r}
+
+```
+
+### Objective 1
+The model form of the binomial generalized linear mixed model is the following
+$$
+\text{log} \bigg(\frac{Pr(Y_i = y| N,\boldsymbol{\beta},\textbf{X})}{1 - Pr(Y_i = y| N,\boldsymbol{\beta},\textbf{X})}\bigg) = \beta_0 + \beta_{\text{region}} \text{R}_i + \beta_{\text{procedure}} \text{P}_i+ \beta_{\text{region:procedure}} \text{R}_i \text{P}_i + d_
+$$
+Use the logit stuff.  No.  That will take way too long.
+
+Use the binomial stuff.
+
+
+
+\begin{align*}
+\text{a}
+\end{align*}
+
+Clearly describe a binomial generalized linear mixed model, in equation form, that you will fit to the data, including specification of all distributional assumptions for the data model and for the prior distributions used. The outcome of interest is the number of deaths out of the given number of cases.  Your model should include the following components: (1) random intercepts for each hospital and each physician, with hospital random effects independent of physician random effects, and (2) fixed effects for each combination of region and procedure type. You will not use the variable for expected mortality rate in this modeling. Fit the model and provide point and interval estimates of the variances of the random effects. Treating the Queens region as a referent and using estimates from your model for a fixed hospital and clinician, provide a figure (or two figures) showing posterior medians and 95% credible intervals of odds ratios comparing the odds of death in each region to that in Queens, separately for each procedure type. (That is, you need to show 10 odds ratios for CABG and 10 odds ratios for Valve or Valve/CABG. You do not need to interpret each individual OR obtained from the model in text.)
+1
+
+### Objective 2
+
+### Objective 3
+
+### Objective 4
+
+### Objective 5
+
+### Objective 6
+
+### Objective 7
