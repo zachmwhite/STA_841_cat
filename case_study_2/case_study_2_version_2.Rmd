@@ -99,20 +99,22 @@ if (!file.exists("final_model.Rdata")) {
                     family = binomial("logit"),
                     data = cs2,
                     control = list(adapt_delta = .85),
-                  prior = set_prior("normal(0,4)","b"),
+                  prior = set_prior("normal(0,4)",class = "b"),
                     iter = 5000
                     )
+   save(final.model,file = final_model.Rdata)
 
  } else{
    load("final_model.Rdata")
  }
+
 rand.eff = ranef(final.model)
 post.samp = posterior_samples(final.model)
 sum.fin = summary(final.model)
 ```
 
 
-### Objective 1
+#### Objective 1
 ```{r, echo = FALSE}
 labels = levels(cs2$detailed.region)[-1]
 region.effects = sum.fin$fixed
@@ -126,7 +128,7 @@ region.cabg.fp = ggplot(region.cabg.df, aes(x = labels, ymin = cabg.lower,y = ca
     labs(subtitle = "Odds of Death of CABG to Queens CABG by REgion", y = "Median (95% CrI)") +
     coord_flip() +
     theme_bw()
-
+# We don't include the intercept or the procedure because we ar doing an odds ratio between region valve and queens valve
 valve.lower = exp( region.effects[2:11,3]  +region.effects[13:22,3])
 valve.upper = exp( region.effects[2:11,4] +region.effects[13:22,4])
 valve.med = exp(region.effects[2:11,1] +region.effects[13:22,1])
@@ -146,24 +148,15 @@ grid.arrange(region.cabg.fp,region.valve.fp, ncol = 1)
 ```
 The model form of the binomial generalized linear mixed model is the following:
 $$
-\text{log} \bigg(\frac{Pr(Y_i = y| N,\boldsymbol{\beta},\textbf{X})}{1 - Pr(Y_i = y| N,\boldsymbol{\beta},\textbf{X})}\bigg) = \beta_0 + \beta_{\text{region}} \text{R}_i + \beta_{\text{procedure}} \text{P}_i+ \beta_{\text{region:procedure}} \text{R}_i \text{P}_i + d_j
+\text{log} \bigg(\frac{Pr(Y_{ijk} = y| N,\boldsymbol{\beta},\textbf{X})}{1 - Pr(Y_{ijk} = y| N,\boldsymbol{\beta},\textbf{X})}\bigg) = \beta_0 + \beta_{\text{region}} \text{R}_{ijk} + \beta_{\text{procedure}} \text{P}_{ijk}+ \beta_{\text{region:procedure}} \text{R}_{ijk} \text{P}_{ijk} + \text{h}_i+ \text{d}_j
 $$
-For the sake of ease of interpretation, we use a logit link instead of a probit link. Also,
-alternatively, we could expand this data into a table of bernoulli trials, but doing so increases
-computation time fitting our bayesian model, since there are 76, 519 total cases. We use
-a $N(0,\text{sd} = 4)$ priors on all $\beta$ coefficients.  Also, for the random effect for hospital $\text{h}_i \sim N(0,\sigma^2_{\text{hospital}})$ where $\sigma^2_{\text{hospital}}$ follows a folded stuent-t distribution with 3 degrees
-of freedom and a scale parameter of 10. For the random effect for physician, we use a
-similar prior structure as for the hospital random effect where $\text{d}_j \sim N(0,\sigma^2_{\text{physician}})$ where $\sigma^2_{\text{physician}}$ follows the same folded t-distribution. However, it is important to note that we leave these random effects inependent from one another. Once we fit this model and generate posterior draws for these random effects, we estimate that $\sigma_{\text{hospital}} = 0.11\ (0.01,.026)$ and $\sigma_{\text{physician}} = 0.37\ (0.29,0.46)$. The parenthetical values represent a central 90% credible interval. Although both of these are entirely above zero, it seems clear that $\sigma_{\text{physician}} > \sigma_{\text{hospital}}$, which indicates that there is more heterogeneity on the level of the doctor than that of the hospitals,
-which is not suprising. These are posterior estimates for the standard error for these random
-effects. If we are interested in the variance of these standard errors, we need to square these
-posterior draws and then find the relevant quantiles of interested. Doing this yields the
-following estimates: $\sigma^2_{\text{hospital}} = .011 (0.00013,0.055)$ and $\sigma^2_{\text{physician}} = 0.137\ (0.0897,0.201)$ which are obviously smaller since these values were already less than 1.
+For the sake of ease of interpretation, we use a logit link instead of a probit link. Also, alternatively, we could expand this data into a table of bernoulli trials, but doing so increases computation time fitting our bayesian model, since there are 76, 519 total cases. We use a $N(0,\text{sd} = 4)$ priors on all $\beta$ coefficients.  Also, for the random effect for hospital $\text{h}_i \sim N(0,\sigma^2_{\text{hospital}})$ where $\sigma^2_{\text{hospital}}$ follows a folded stuent-t distribution with 3 degrees of freedom and a scale parameter of 10. For the random effect for physician, we use a similar prior structure as for the hospital random effect where $\text{d}_j \sim N(0,\sigma^2_{\text{physician}})$ where $\sigma^2_{\text{physician}}$ follows the same folded t-distribution. However, it is important to note that we leave these random effects inependent from one another. Once we fit this model and generate posterior draws for these random effects, we estimate that $\sigma_{\text{hospital}} = 0.11\ (0.01,.026)$ and $\sigma_{\text{physician}} = 0.37\ (0.29,0.46)$. The parenthetical values represent a central 90% credible interval. Although both of these are entirely above zero, it seems clear that $\sigma_{\text{physician}} > \sigma_{\text{hospital}}$, which indicates that there is more heterogeneity on the level of the doctor than that of the hospitals, which is not suprising. These are posterior estimates for the standard error for these random effects. If we are interested in the variance of these standard errors, we need to square these posterior draws and then find the relevant quantiles of interested. Doing this yields the following estimates: $\sigma^2_{\text{hospital}} = .011 (0.00013,0.055)$ and $\sigma^2_{\text{physician}} = 0.137\ (0.0897,0.201)$ which are obviously smaller since these values were already less than 1.
  
-We now show the posterior medians and a 95% credible interval for the odds-ratios comparing
+The above plot shows the posterior medians and a 95% credible interval for the odds-ratios comparing
 the odds of death in each region to that in Queens for each of the two procedures.
 
 
-### Objective 2
+#### Objective 2
 ```{r, echo = FALSE}
 names(post.samp) = names(post.samp) %>% str_replace("r\\_physician.name\\[","") %>%
   str_replace("r\\_hospital.name\\[","") %>%
@@ -183,18 +176,19 @@ for(i in 1:nrow(cs2)){
   match.hosp = agrep(hospital,names(post.samp))
   match.region = agrep(region,names(post.samp))
   
+  #Random Effects
+  rand.ind = post.samp[,match.phys] + post.samp[,match.hosp]
   if(procedure == "CABG"){
     if(region == "Queens"){
-      nu = post.samp[,match.phys] + post.samp[,match.hosp] + post.samp[,1] 
-    }
-    else{
-      nu = post.samp[,match.phys] + post.samp[,match.hosp] + post.samp[,1] + post.samp[,match.region[1]]
+      nu = rand.ind  + post.samp[,1] 
+    } else{
+      nu = rand.ind + post.samp[,1] + post.samp[,match.region[1]]
     }
   } else{
     if(region == "Queens"){
-      nu = post.samp[,match.phys] + post.samp[,match.hosp] + post.samp[,1] + post.samp[,12] 
+      nu = rand.ind + post.samp[,1] + post.samp[,12] 
     } else {
-      nu = post.samp[,match.phys] + post.samp[,match.hosp] + post.samp[,1] + post.samp[,12] + post.samp[,match.region[1]] + post.samp[,match.region[2]]
+      nu = rand.ind + post.samp[,1] + post.samp[,12] + post.samp[,match.region[1]] + post.samp[,match.region[2]]
     }
   }
   prob = inv_logit(nu)
@@ -223,7 +217,7 @@ cs2 = cs2 %>% mutate(procedure = ifelse(procedure == "CABG","CABG","Valve"),
                      )
 ```
 The following forest plot shows the different combinations of observed doctors, hospitals, and procedure type. There are a lot of doctors in these data, and thus, we do not show all of the doctors in the table. However, the plot on the left shows the procedure for ratio of modeled rate of mortality to expected mortality rate, which takes into consideration case mixture. It is important to note that if this ratio is less than one, then the doctor’s mortality rate is lower than expected, and thus this doctor is performing better than expected. The opposite holds true for ratios greater than 1. Also, on the plot is a dotted line at the one, which would indicate that the physician is performing as well as we would expect. Analyzing these plots, it seems as though there are more doctors whose ratio is greater than one when performing the valve or valve/CABG operation than when performing CABG. CABG seems higher variance in general, but there are also less doctors doing worse than expected.
-```{r, echo = FALSE}
+```{r, echo = FALSE,fig.height=3}
 ggplot(cs2, aes(physician.name,y = med.ratio, ymin = lower.ratio, ymax = upper.ratio)) +
   geom_pointrange(fill = "blue", color = "grey", shape = 21, size = .25) + 
   geom_hline(yintercept = 1, lty = 2) + 
@@ -232,43 +226,44 @@ ggplot(cs2, aes(physician.name,y = med.ratio, ymin = lower.ratio, ymax = upper.r
   labs(title = "Credible Interval of Ratio by physician and procedure",
        ylab = NULL,
        xlab = "Ratio") + 
-  scale_x_discrete(breaks = 20)
+  scale_x_discrete(breaks = 20) +
+  theme_bw()
 
 ```
 The following table shows the attributes of physicians with a posterior probability of the ratio being greater than 1 of less than 0.05. In other words, these are physicians with a 0.95 probability of exceding expectations.
 
 ```{r, echo = FALSE}
 cs2 %>% filter(below.05) %>%
-  select(physician.name,hospital.name,procedure,med.prob,lower.prob,upper.prob) %>%
+  select(physician.name,hospital.name,procedure,med.prob,lower.prob,upper.prob,prob.rat.more.1) %>%
   rename("physician" = physician.name,
          "hospital" = hospital.name,
          "proc" = procedure,
          "Rate Est." = med.prob,
          "Lower" = lower.prob,
-         "Upper" = upper.prob) %>%
+         "Upper" = upper.prob,
+         "Pr(R>1)" = prob.rat.more.1) %>%
   kable(.)
 ```
-These tables are way too big.  Where did I go wrong. I'm using the right model. Aren't I?
-
 
 This table shows the physicians whose ratio has a posterior probability of exceding 1 of greater than 0.95. In other words, these are physicians with a high probability of doing worse than expected, since a ratio of greater than 1 indicates that the modeled rate is greater than the expected mortality rate.
 
 ```{r, echo = FALSE}
-cs2 %>% filter(above.95) %>% select(physician.name,hospital.name,procedure,med.prob,lower.prob,upper.prob) %>%
+cs2 %>% filter(above.95) %>% select(physician.name,hospital.name,procedure,med.prob,lower.prob,upper.prob,prob.rat.more.1) %>%
   rename("physician" = physician.name,
          "hospital" = hospital.name,
          "proc" = procedure,
          "Rate Est." = med.prob,
          "Lower" = lower.prob,
-         "Upper" = upper.prob) %>%
+         "Upper" = upper.prob,
+         "Pr(R>1)" = prob.rat.more.1) %>%
   kable(.)
 ```
 
 
-### Objective 3
+#### Objective 3
 Dr. Tortolani has performed these procedures at both the NY Methodist Hospital and NYP-Weill Cornell. To assess whether Dr. Tortolani has a higher mortality rate than expected, we will use information from both these hospitals. The following table shows which the Observed Mortality Ratio(OMR), Expected Mortality Ratio (EMR), median and credible interval for the ratio between modeled mortality ratio and EMR, and the probability of whether that ratio is greater than 1.
 ```{r, echo  = FALSE}
-cs2 %>% filter(physician.name == "Tortolani") %>%
+cs2 %>% filter(physician.name == "Tortolani A") %>%
   select(hospital.name,procedure, number.of.cases, observed.mortality.rate, expected.mortality.rate,med.ratio,lower.ratio,upper.ratio,prob.rat.more.1) %>%
   rename("hospital" = hospital.name,
          "n" = number.of.cases,
@@ -277,23 +272,21 @@ cs2 %>% filter(physician.name == "Tortolani") %>%
          "EMR" = expected.mortality.rate,
          "m.Ratio" = med.ratio,
          "Lower" = lower.ratio,
-         "Upper" = upper.ratio) %>%
+         "Upper" = upper.ratio,
+         "Pr(R>1)" = prob.rat.more.1) %>%
   kable(.)
 ```
 
 
-Within the Methodist hospital, there is 0.37 or 0.93 probability that Dr. Tortolani is doing worse than expected in CABG and valve or valve/CABG procedures. While the first probability is not particularly high, the latter does seem to be evidence of underperformance.  Understanding that Dr. Tortolani also has performed these procedures at Cornell is important. However, it is also important to understand that he has only performed 4 CABG and 5 valve
-procedures there. The probability that the ratios are greater than 1 is 0.843 and 1.00 for the CABG and valuve procedures, resepectively. These probabilities reflect a smaller sample size and higher observed mortality rate. Although it is not immediately clear, there does seem to be evidence that Dr. Tortolani is doing worse than expected in these procedures
+Within the Methodist hospital, there is 0.97 or 0.93 probability that Dr. Tortolani is doing worse than expected in CABG and valve or valve/CABG procedures. These both seem quite high.  Understanding that Dr. Tortolani also has performed these procedures at Cornell is important. However, it is also important to understand that he has only performed 4 CABG and 5 valve procedures there. The probability that the ratios are greater than 1 is 0.843 and 1.00 for the CABG and valuve procedures, resepectively. These probabilities reflect a smaller sample size and higher observed mortality rate. There seems to be evidence that Dr. Tortolani is doing worse than expected in these procedures.
 
-### Objective 4
-The following table shows similar information as the previous table. However, this is for
-each doctor at NYP-Columbia Presbyterian Hospital, including the doctors who also work
-elsewhere and their respective hospitals. However, for this, we also include the total number of cases for each of the doctors because it helps to quantify our uncertainty better in this
-context.
+#### Objective 4
+The following table shows similar information as the previous table. However, this is for each doctor at NYP-Columbia Presbyterian Hospital, including the doctors who also work elsewhere and their respective hospitals. However, for this, we also include the total number of cases for each of the doctors because it helps to quantify our uncertainty better in this context.
 
 ```{r, echo = FALSE}
-
-cs2 %>% filter(hospital == "NYP- Columbia Presby.") %>%
+pres.doctors = cs2 %>% filter(hospital.name == "NYP- Columbia Presby.") %>%
+  .[["physician.name"]]
+cs2 %>% filter(physician.name %in% pres.doctors) %>%
   select(physician.name,hospital.name,procedure, number.of.cases, observed.mortality.rate, expected.mortality.rate,med.ratio,lower.ratio,upper.ratio,prob.rat.more.1) %>%
   rename("physician" = physician.name,
          "hospital" = hospital.name,
@@ -303,20 +296,17 @@ cs2 %>% filter(hospital == "NYP- Columbia Presby.") %>%
          "EMR" = expected.mortality.rate,
          "m.Ratio" = med.ratio,
          "Lower" = lower.ratio,
-         "Upper" = upper.ratio) %>%
+         "Upper" = upper.ratio,
+         "Pr(R>1)" = prob.rat.more.1) %>%
   kable(.)
 
 ```
 
-Using this information, we could set a probability threshold of the ratio between modeled mortality rates and EMR to decide whether there should be concern for any of the clinicians’ performance. To illustrate, we decide that the threshold is that if there is 0.80 probability that a doctor is underperforming, then we should be concerned. Under these conditions, we should be concerned about the valve operations for doctors Argenziano, Chen, Naka, Quaegebeur, and Stewart (no CABG procedures meet this criteria). If we investigate this further, we see that both Checn and Quaeagebeur have an extremely small procedure loads, and so this probability is only reflective of prior and population information. Check and Naka both
-perform very little operations at NYP-Weill Cornell, and their ratio is also quite high, but
-the similar story holds. However, there should be concern for Argenziano, Naka, and Stewart
-because they all have high case-loads and high probability that they are underperforming.
+Using this information, we could set a probability threshold of the ratio between modeled mortality rates and EMR to decide whether there should be concern for any of the clinicians’ performance. To illustrate, we decide that the threshold is that if there is 0.80 probability that a doctor is underperforming, then we should be concerned. Under these conditions, we should be concerned about the valve operations for doctors Argenziano, Chen, Naka, Quaegebeur, and Stewart (no CABG procedures meet this criteria). If we investigate this further, we see that both Checn and Quaeagebeur have an extremely small procedure loads, and so this probability is only reflective of prior and population information. Check and Naka both perform very little operations at NYP-Weill Cornell, and their ratio is also quite high, but the similar story holds. However, there should be concern for Argenziano, Naka, and Stewart because they all have high case-loads and high probability that they are underperforming.
 
-### Objective 5
-He is actually pretty good. Not the best.
+#### Objective 5
+According to the table below, Dr. Ciaburri does not have an observed mortality in the data set.  However, analyzing this number alone is not sufficient because it may be due to a relatively small procedue load.  Analzying credible interval for the ratios of modeled mortality rate to expected mortaility rate shows that Dr. Ciaburri does in fact exceed expectation, especially for the valve surgery in the Methodist hospital.  Also, observing the probability that their ratio is greater than 1 supports the idea that Dr. Ciaburri is exceeding expectation.  However, both of these measures are not complete for ranking physicians.  If I were to rank physicians, I would rank them according to their upper bound of the credible interval for the ratio of interest.  This way we can take into consideration the variance of these estimates, which is important.  These are still conditional on both hospital and procedure.  We could do a weighted average across these easily.  Doing it this way, we see that Dr. Ciaburri is ranked quite highly, but he is not the highest ranked physician, who is actualy Dr. Spielvogel.  I do not show the top 15 for reason of space.
 
-My criterion for the best: Lowest upper credible interval bound for the ratio.  Values certainty and exceeding expectations.  Spielvogel or something
 ```{r, echo = FALSE}
 cs2 %>% filter(physician.name == "Ciaburri D") %>%
   select(hospital.name,procedure, number.of.cases, observed.mortality.rate, expected.mortality.rate,med.ratio,lower.ratio,upper.ratio,prob.rat.more.1) %>%
@@ -327,7 +317,8 @@ cs2 %>% filter(physician.name == "Ciaburri D") %>%
          "EMR" = expected.mortality.rate,
          "m.Ratio" = med.ratio,
          "Lower" = lower.ratio,
-         "Upper" = upper.ratio) %>%
+         "Upper" = upper.ratio,
+         "Pr(R>1)" = prob.rat.more.1) %>%
   kable(.)
 ```
 
@@ -345,21 +336,19 @@ top_15 = cs2 %>%
          "Lower" = lower.ratio,
          "Upper" = upper.ratio) %>%
   top_n(.,n=15,-Upper)
-
-kable(top_15)
 ```
 
-Suppose Dr. Ciaburri is arguing for a salary increase on the basis that (s)he has the best mortality record in the state. Assess whether Dr. Ciaburri is indeed a superior clinician and provide evidence to support your response. If you are asked by CMS to select the best clinician in the state, whom would you select, and why? Provide evidence based on your analysis results to support your recommendation.
 
-### Objective 6
+#### Objective 6
+To recognize high and low achieving hospitals, we use a similar process as we do for the physicians.  We use the posterior samples for the modeled rates for each of the combinations of the physicians and the procedures.  We then average these modeled rates weighted by the number of cases, and then also average the EMR in a similar fashion.  We then take these draws to calculate these ratios and and find the posterior credible intervals.  We sort these hospitals according to the upper bound of the credible interval for this ratio and rank them in this way.
 ```{r, echo = FALSE}
 unique.hosp = unique(cs2$hospital.name)
 #prob.mat
 hosp.ratio.mat = data_frame()
 for(hosp in unique.hosp){
   hosp.mat = prob.mat[,which(cs2$hospital.name == hosp)]
-  ave.vec = apply(hosp.mat,1,mean)
-  ave.epr = mean(cs2$expected.mortality.rate.real[which(cs2$hospital.name == hosp)])
+  ave.vec = apply(hosp.mat,1,function(x) weighted.mean(x,cs2$number.of.cases[which(cs2$hospital.name == hosp)]))
+  ave.epr = weighted.mean(cs2$expected.mortality.rate.real[which(cs2$hospital.name == hosp)],cs2$number.of.cases[which(cs2$hospital.name == hosp)])
   hosp.ratio = ave.vec / ave.epr
   hosp.n = sum(cs2$number.of.cases[which(cs2$hospital.name == hosp)])
   df = data_frame(name = hosp, 
@@ -371,10 +360,12 @@ for(hosp in unique.hosp){
   hosp.ratio.mat = bind_rows(hosp.ratio.mat,df)
   
 }
-hosp.ratio.mat =  hosp.ratio.mat %>% arrange(upper.ratio) 
+weighted.hosp.mat = hosp.ratio.mat %>% arrange(upper.ratio)
 
-top_5 = hosp.ratio.mat %>% head(n = 5)
-bottom_5 = hosp.ratio.mat %>% tail(n = 5) %>% arrange(desc(upper.ratio))
+top_5 = weighted.hosp.mat %>% head(n = 5) %>% bind_cols(rank = 1:5,.) %>%
+  rename("Pr(R>1)" = prob.above.1)
+bottom_5 = weighted.hosp.mat %>% tail(n=5) %>% bind_cols(rank = 36:40,.) %>%
+  rename("Pr(R>1)" = prob.above.1)
 ```
 
 ```{r, echo = FALSE}
@@ -385,11 +376,13 @@ kable(top_5)
 kable(bottom_5)
 ```
 
-Average the modeled and expected rates across all doctors in a hosptial
 
 
-### Objective 7
+#### Objective 7
+Using a model based recommendations allow us to take into consideration not only other variables, but it also allows us to quantify our uncertainty more efficiently in our estimates. 
+
 When you present results to CMS staff members, someone asks why you are using a model rather than
 simply basing all recommendations and decisions on the ratio of observed to expected (adjusted for case
 mix) deaths. Discuss advantages of using model-based estimates rather than making recommendations
 based on the simple ratio.
+
