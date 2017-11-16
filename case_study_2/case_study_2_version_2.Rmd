@@ -211,18 +211,38 @@ for(i in 1:nrow(cs2)){
   cs2$above.95[i] = rat.more.1 > .95
   cs2$below.05[i] = rat.more.1 < .05
 }
+
+cs2 = cs2 %>% mutate(procedure = ifelse(procedure == "CABG","CABG","Valve"),
+                     lower.prob = round(lower.prob,4),
+                     med.prob = round(med.prob,4),
+                     upper.prob = round(upper.prob,4),
+                     lower.ratio = round(lower.ratio,4),
+                     med.ratio = round(med.ratio,4),
+                     upper.ratio = round(upper.ratio,4),
+                     prob.rat.more.1 = round(prob.rat.more.1,4)
+                     )
 ```
 The following forest plot shows the different combinations of observed doctors, hospitals, and procedure type. There are a lot of doctors in these data, and thus, we do not show all of the doctors in the table. However, the plot on the left shows the procedure for ratio of modeled rate of mortality to expected mortality rate, which takes into consideration case mixture. It is important to note that if this ratio is less than one, then the doctor’s mortality rate is lower than expected, and thus this doctor is performing better than expected. The opposite holds true for ratios greater than 1. Also, on the plot is a dotted line at the one, which would indicate that the physician is performing as well as we would expect. Analyzing these plots, it seems as though there are more doctors whose ratio is greater than one when performing the valve or valve/CABG operation than when performing CABG. CABG seems higher variance in general, but there are also less doctors doing worse than expected.
+```{r}
+ggplot(cs2, aes(physician.name,y = med.ratio, ymin = lower.ratio, ymax = upper.ratio)) +
+  geom_pointrange(col = "blue", size = .23) + 
+  geom_hline(yintercept = 1, lty = 2) + 
+  facet_grid(~procedure) +
+  coord_flip()+
+  scale_x_discrete(breaks = 20)
 
-Big forest plot
-
+```
 The following table shows the attributes of physicians with a posterior probability of the ratio being greater than 1 of less than 0.05. In other words, these are physicians with a 0.95 probability of exceding expectations.
 
 ```{r}
 cs2 %>% filter(below.05) %>%
   select(physician.name,hospital.name,procedure,med.prob,lower.prob,upper.prob) %>%
-  mutate() %>%
-  rename %>%
+  rename("physician" = physician.name,
+         "hospital" = hospital.name,
+         "proc" = procedure,
+         "Rate Est." = med.prob,
+         "Lower" = lower.prob,
+         "Upper" = upper.prob) %>%
   kable(.)
 ```
 These tables are way too big.  Where did I go wrong. I'm using the right model. Aren't I?
@@ -271,11 +291,36 @@ because they all have high case-loads and high probability that they are underpe
 ### Objective 5
 He is actually pretty good. Not the best.
 
-My criterion for the best: Lowest upper credible interval bound for the ratio.  Values certainty and exceeding expectations.  Pielman or something
-```{}
-
+My criterion for the best: Lowest upper credible interval bound for the ratio.  Values certainty and exceeding expectations.  Spielvogel or something
+```{r}
+cs2 %>% filter(physician.name == "Ciaburri D") %>%
+  select(hospital.name,procedure, number.of.cases, observed.mortality.rate, expected.mortality.rate,med.ratio,lower.ratio,upper.ratio,prob.rat.more.1) %>%
+  rename("hospital" = hospital.name,
+         "n" = number.of.cases,
+         "OMR" = observed.mortality.rate,
+         "proc" = procedure,
+         "EMR" = expected.mortality.rate,
+         "m.Ratio" = med.ratio,
+         "Lower" = lower.ratio,
+         "Upper" = upper.ratio) %>%
+  kable(.)
 ```
 
+```{r}
+cs2 %>%
+  select(physician.name,hospital.name,procedure, number.of.cases, observed.mortality.rate, expected.mortality.rate,med.ratio,lower.ratio,upper.ratio,prob.rat.more.1) %>%
+  arrange(upper.ratio) %>%
+  rename("physician" = physician.name,
+         "hospital" = hospital.name,
+         "n" = number.of.cases,
+         "OMR" = observed.mortality.rate,
+         "proc" = procedure,
+         "EMR" = expected.mortality.rate,
+         "m.Ratio" = med.ratio,
+         "Lower" = lower.ratio,
+         "Upper" = upper.ratio) %>%
+  top_n(.,n=15,-Upper)
+```
 
 Suppose Dr. Ciaburri is arguing for a salary increase on the basis that (s)he has the best mortality record in the state. Assess whether Dr. Ciaburri is indeed a superior clinician and provide evidence to support your response. If you are asked by CMS to select the best clinician in the state, whom would you select, and why? Provide evidence based on your analysis results to support your recommendation.
 
