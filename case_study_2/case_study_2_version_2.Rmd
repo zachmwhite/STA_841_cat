@@ -4,7 +4,7 @@ author: "Zach White"
 date: "November 15, 2017"
 output: pdf_document
 fontsize: 12pt
-geometry: margin=.8in
+geometry: margin=1in
 ---
 
 ```{r setup, include=FALSE, warnings = FALSE}
@@ -94,19 +94,19 @@ bin.model = brm(death ~ (1| hospital.name) + (1 | physician.name) + detailed.reg
 
 # Load posterior draws if they already exist
 
-if (!file.exists("final_model1.Rdata")) {
+if (!file.exists("final_model.Rdata")) {
     # Do posterior draws here.
    final.model = brm(number.of.deaths | trials(number.of.cases) ~ (1| hospital.name) + (1 | physician.name) + detailed.region + procedure + procedure:detailed.region,
                     family = binomial("logit"),
                     data = cs2,
                     control = list(adapt_delta = .85),
-                  #prior = set_prior("normal(0,4)",class = "b"),
+                    prior = set_prior("normal(0,4)",class = "b"),
                     iter = 5000
                     )
-   save(final.model,file = "final_model1.Rdata")
+   save(final.model,file = "final_model.Rdata")
 
  } else{
-   load("final_model1.Rdata")
+   load("final_model.Rdata")
  }
 
 rand.eff = ranef(final.model)
@@ -307,7 +307,7 @@ cs2 %>% filter(physician.name %in% pres.doctors) %>%
 Using this information, we could set a probability threshold of the ratio between modeled mortality rates and EMR to decide whether there should be concern for any of the clinicians’ performance. To illustrate, we decide that the threshold is that if there is 0.80 probability that a doctor is underperforming, then we should be concerned. Under these conditions, we should be concerned about the valve operations for doctors Argenziano, Chen, Naka, Quaegebeur, and Stewart (no CABG procedures meet this criteria). If we investigate this further, we see that both Checn and Quaeagebeur have an extremely small procedure loads, and so this probability is only reflective of prior and population information. Check and Naka both perform very little operations at NYP-Weill Cornell, and their ratio is also quite high, but the similar story holds. However, there should be concern for Argenziano, Naka, and Stewart because they all have high case-loads and high probability that they are underperforming.
 
 ##### Objective 5
-According to the table below, Dr. Ciaburri does not have an observed mortality in the data set.  However, analyzing this number alone is not sufficient because it may be due to a relatively small procedue load.  Analzying credible interval for the ratios of modeled mortality rate to expected mortaility rate shows that Dr. Ciaburri does in fact exceed expectation, especially for the valve surgery in the Methodist hospital.  Also, observing the probability that their ratio is greater than 1 supports the idea that Dr. Ciaburri is exceeding expectation.  However, both of these measures are not complete for ranking physicians.  If I were to rank physicians, I would rank them according to their upper bound of the credible interval for the ratio of interest.  This way we can take into consideration the variance of these estimates, which is important.  These are still conditional on both hospital and procedure.  We could do a weighted average across these easily.  Doing it this way, we see that Dr. Ciaburri is ranked quite highly, but he is not the highest ranked physician, who is actualy Dr. Spielvogel.  I do not show the top 15 for reason of space.
+According to the table below, Dr. Ciaburri does not have an observed mortality in the data set.  However, analyzing this number alone is not sufficient because it may be due to a relatively small procedue load.  Analzying credible interval for the ratios of modeled mortality rate to expected mortaility rate shows that Dr. Ciaburri does in fact exceed expectation, especially for the valve surgery in the Methodist hospital.  Also, observing the probability that their ratio is greater than 1 supports the idea that Dr. Ciaburri is exceeding expectation.  However, both of these measures are not complete for ranking physicians.  If I were to rank physicians, I would rank them according to their upper bound of the credible interval for the ratio of interest.  This way we can take into consideration the variance of these estimates, which is important.  These are still conditional on both hospital and procedure.  We do a weighted average across the modeled probabilities and expected mortaility rate, weighting the number of cases from each physician.  Although this is ad-hoc, it makes sense to use it as a rating system for physicians or hospitals.  Doing it this way, we see that Dr. Ciaburri is ranked quite highly, but he is not the highest ranked physician, who is actualy Dr. Spielvogel. 
 
 ```{r, echo = FALSE,strip.white=TRUE}
 cs2 %>% filter(physician.name == "Ciaburri D") %>%
@@ -324,7 +324,7 @@ cs2 %>% filter(physician.name == "Ciaburri D") %>%
   kable(., padding = 0)
 ```
 
-```{r, echo = FALSE,strip.white=TRUE}
+```{r, echo = FALSE,strip.white=TRUE, cache = TRUE}
 top_15 = cs2 %>%
   select(physician.name,hospital.name,procedure, number.of.cases, observed.mortality.rate, expected.mortality.rate,med.ratio,lower.ratio,upper.ratio,prob.rat.more.1) %>%
   arrange(upper.ratio) %>%
@@ -340,10 +340,40 @@ top_15 = cs2 %>%
   top_n(.,n=15,-Upper)
 ```
 
+```{r, echo = FALSE,cache = TRUE}
+unique.phys = unique(cs2$physician.name)
+#prob.mat
+physician.rat.df = data_frame()
+for(phys in unique.phys){
+  phys.mat = prob.mat[,which(cs2$physician.name == phys)]
+  if(sum(cs2$physician.name == phys) > 1){
+    ave.vec = apply(phys.mat,1,function(x) weighted.mean(x,cs2$number.of.cases[cs2$physician.name == phys]))
+    ave.epr = weighted.mean(cs2$expected.mortality.rate.real[cs2$physician.name == phys],cs2$number.of.cases[cs2$physician.name == phys])
+  } else {
+    ave.vec = phys.mat
+    ave.epr = cs2$expected.mortality.rate.real[cs2$physician.name == phys]
+  }
+  phys.ratio = ave.vec / ave.epr
+  phys.n = sum(cs2$number.of.cases[which(cs2$physician.name == phys)])
+  df = data_frame(name = phys, 
+                  total.n = phys.n,
+                  med.ratio = quantile(phys.ratio,.5),
+                  lower.ratio = quantile(phys.ratio,0.025),
+                  upper.ratio = quantile(phys.ratio,.975),
+                  prob.above.1 = mean(phys.ratio > 1))
+  physician.rat.df = bind_rows(physician.rat.df,df)
+  
+}
+
+physician.rat.df %>% arrange(upper.ratio) %>% head(n = 15) %>%
+  kable(.)
+
+```
+
 
 ##### Objective 6
 To recognize high and low achieving hospitals, we use a similar process as we do for the physicians.  We use the posterior samples for the modeled rates for each of the combinations of the physicians and the procedures.  We then average these modeled rates weighted by the number of cases, and then also average the EMR in a similar fashion.  We then take these draws to calculate these ratios and and find the posterior credible intervals.  We sort these hospitals according to the upper bound of the credible interval for this ratio and rank them in this way.
-```{r, echo = FALSE,strip.white=TRUE}
+```{r, echo = FALSE,strip.white=TRUE, cache = TRUE}
 unique.hosp = unique(cs2$hospital.name)
 #prob.mat
 hosp.ratio.mat = data_frame()
