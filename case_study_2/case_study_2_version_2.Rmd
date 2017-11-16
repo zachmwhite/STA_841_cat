@@ -8,7 +8,7 @@ fontsize: 12pt
 
 ```{r setup, include=FALSE, warnings = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-#install.packages("lme4",repos = "http://cran.us.r-project.org")
+#install.packages("knitr",repos = "http://cran.us.r-project.org")
 #install.packages("brms",repos = "http://cran.us.r-project.org")
 #install.packages("tidyverse",repos = "http://cran.us.r-project.org")
 #install.packages("magrittr",repos = "http://cran.us.r-project.org")
@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages("stringr", repos = "http://cran.us.r-project.org")
 #install.packages("rstan",repos = "http://cran.us.r-project.org")
 setwd("C:/Users/Zachary/Desktop/Fall_2017_Projects/STA_841/STA_841_cat/case_study_2")
-library(lme4)
+library(knitr)
 library(tidyverse)
 library(magrittr)
 library(brms)
@@ -107,13 +107,13 @@ if (!file.exists("final_model.Rdata")) {
    load("final_model.Rdata")
  }
 rand.eff = ranef(final.model)
-samp.draws = posterior_samples(final.model)
+post.samp = posterior_samples(final.model)
 sum.fin = summary(final.model)
 ```
 
 
 ### Objective 1
-```{r}
+```{r, echo = FALSE}
 labels = levels(cs2$detailed.region)[-1]
 region.effects = sum.fin$fixed
 cabg.lower = unlist(exp(region.effects[2:11,3]))
@@ -165,7 +165,52 @@ the odds of death in each region to that in Queens for each of the two procedure
 
 ### Objective 2
 ```{r}
+names(post.samp) = names(post.samp) %>% str_replace("r\\_physician.name\\[","") %>%
+  str_replace("r\\_hospital.name\\[","") %>%
+  str_replace("\\,Intercept\\]","")
 
+cs2$expected.mortality.rate.real = cs2$expected.mortality.rate / 100
+
+prob.mat = matrix(0, ncol = nrow(cs2),nrow = 10000)
+
+for(i in 1:nrow(cs2)){
+  physician = cs2$physician.name[i] %>% str_replace_all(" ",".")
+  hospital = cs2$hospital.name[i] %>% str_replace(" ",".")
+  region = cs2$detailed.region[i]  %>% as.character() %>% str_replace_all(" ","") %>% str_replace_all("\\-","")
+  procedure = cs2$procedure[i]
+  
+  match.phys = agrep(physician,names(post.samp))
+  match.hosp = agrep(hospital,names(post.samp))
+  match.region = agrep(region,names(post.samp))
+  
+  if(procedure == "CABG"){
+    if(region == "Queens"){
+      nu = post.samp[,match.phys] + post.samp[,match.hosp] + post.samp[,1] 
+    }
+    else{
+      nu = post.samp[,match.phys] + post.samp[,match.hosp] + post.samp[,1] + post.samp[,match.region[1]]
+    }
+  } else{
+    if(region == "Queens"){
+      nu = post.samp[,match.phys] + post.samp[,match.hosp] + post.samp[,1] + post.samp[,12] 
+    } else {
+      nu = post.samp[,match.phys] + post.samp[,match.hosp] + post.samp[,1] + post.samp[,12] + post.samp[,match.region[1]] + post.samp[,match.region[2]]
+    }
+  }
+  prob = inv_logit(nu)
+  prob.mat[,i] = prob
+  ratio = prob / cs2$expected.mortality.rate.real[i]
+  rat.more.1 = mean(ratio > 1)
+  cs2$prob.rat.more.1[i] = rat.more.1
+  cs2$lower.prob[i] = quantile(prob,.025)
+  cs2$med.prob[i]= quantile(prob,.5)
+  cs2$upper.prob[i] = quantile(prob,.975)
+  cs2$lower.ratio[i] = quantile(ratio,.025)
+  cs2$med.ratio[i]= quantile(ratio,.5)
+  cs2$upper.ratio[i]= quantile(ratio,.975)
+  cs2$above.95[i] = rat.more.1 > .95
+  cs2$below.05[i] = rat.more.1 < .05
+}
 ```
 The following forest plot shows the different combinations of observed doctors, hospitals, and procedure type. There are a lot of doctors in these data, and thus, we do not show all of the doctors in the table. However, the plot on the left shows the procedure for ratio of modeled rate of mortality to expected mortality rate, which takes into consideration case mixture. It is important to note that if this ratio is less than one, then the doctor’s mortality rate is lower than expected, and thus this doctor is performing better than expected. The opposite holds true for ratios greater than 1. Also, on the plot is a dotted line at the one, which would indicate that the physician is performing as well as we would expect. Analyzing these plots, it seems as though there are more doctors whose ratio is greater than one when performing the valve or valve/CABG operation than when performing CABG. CABG seems higher variance in general, but there are also less doctors doing worse than expected.
 
@@ -173,9 +218,23 @@ Big forest plot
 
 The following table shows the attributes of physicians with a posterior probability of the ratio being greater than 1 of less than 0.05. In other words, these are physicians with a 0.95 probability of exceding expectations.
 
+```{r}
+cs2 %>% filter(below.05) %>%
+  select(physician.name,hospital.name,procedure,med.prob,lower.prob,upper.prob) %>%
+  mutate() %>%
+  rename %>%
+  kable(.)
+```
+These tables are way too big.  Where did I go wrong. I'm using the right model. Aren't I?
+
 Good Table
 
 This table shows the physicians whose ratio has a posterior probability of exceding 1 of greater than 0.95. In other words, these are physicians with a high probability of doing worse than expected, since a ratio of greater than 1 indicates that the modeled rate is greater than the expected mortality rate.
+
+```{r}
+cs2 %>% filter(above.95) %>% select(physician.name,hospital.name,procedure,med.prob,lower.prob,upper.prob) %>%
+  kable(.)
+```
 
 Bad table
 
